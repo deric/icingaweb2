@@ -34,7 +34,7 @@ use \Icinga\Application\Config;
 use \Icinga\Application\Logger;
 use \Icinga\Authentication\Manager;
 use \Icinga\Web\Form;
-use \Icinga\Web\Controller\ModuleActionController;
+use \Icinga\Web\Controller\ActionController;
 use \Icinga\Protocol\Commandpipe\CommandPipe;
 use \Icinga\Exception\ConfigurationError;
 use \Icinga\Exception\MissingParameterException;
@@ -53,7 +53,7 @@ use \Monitoring\Form\Command\SubmitPassiveCheckResultForm;
  *
  * Interface to send commands and display forms
  */
-class Monitoring_CommandController extends ModuleActionController
+class Monitoring_CommandController extends ActionController
 {
     const DEFAULT_VIEW_SCRIPT = 'renderform';
 
