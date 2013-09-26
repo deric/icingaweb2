@@ -43,6 +43,7 @@ use \Icinga\Application\Config as IcingaConfig;
 use Icinga\Module\Monitoring\DataView\Notification as NotificationView;
 use Icinga\Module\Monitoring\DataView\Downtime as DowntimeView;
 use Icinga\Module\Monitoring\DataView\HostAndServiceStatus as HostAndServiceStatusView;
+use Icinga\Module\Monitoring\DataView\Comment as CommentView;
 
 class Monitoring_ListController extends ActionController
 {
@@ -244,9 +245,42 @@ class Monitoring_ListController extends ActionController
             )
         )->getQuery();
         $this->view->notifications = $query->paginate();
-        $this->setupSortControl(array(
-            'notification_start_time'   => 'Notification Start'
-        ));
+        $this->setupSortControl(
+            array(
+                'notification_start_time'   => 'Notification Start'
+            )
+        );
+        $this->handleFormatRequest($query);
+    }
+
+    public function commentsAction()
+    {
+        $query = CommentView::fromRequest(
+            $this->_request,
+            array(
+                'comment_objecttype_id',
+                'comment_id',
+                'comment_data',
+                'comment_author',
+                'comment_timestamp',
+                'comment_type',
+                'comment_is_persistent',
+                'comment_expiration_timestamp',
+                'host_name',
+                'service_name'
+            )
+        )->getQuery();
+
+        $this->view->comments = $query->paginate();
+
+        $this->setupSortControl(
+            array(
+                'comment_timestamp' => 'Comment Timestamp',
+                'host_service'      => 'Host and Service',
+                'comment_id'        => 'Comment Id',
+                'comment_expires'   => 'Expiration Timestamp'
+            )
+        );
         $this->handleFormatRequest($query);
     }
 
