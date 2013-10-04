@@ -26,18 +26,24 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-require_once realpath(__DIR__ . '/Application/functions.php');
+/**
+ * Return whether a specific version of Zend is installed
+ *
+ * @param   string      $version    The version of Zend to search for
+ * @return  bool                    Whether the given Zend version is installed
+ */
+function is_zend_installed($version)
+{
+    $phpIncludePaths = explode(PATH_SEPARATOR, get_include_path());
 
-if (!is_zend_installed('1')) {
-    echo '<h3>Zend Framework not found!</h3>'
-        . 'The Zend Framework 1 is mandatory to successfully install and run this application.'
-        . ' Please go to <a href="http://framework.zend.com/downloads/latest#ZF1">zend.com</a>'
-        . ' and install its latest version.';
-    die;
+    foreach ($phpIncludePaths as $path)
+    {
+        if (@include_once($path . '/Zend/Version.php')) {
+            if (substr(Zend_Version::VERSION, 0, strlen($version)) === $version) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
-
-require_once realpath(__DIR__ . '/Application/Wizard.php');
-
-use \Icinga\Installer\Wizard;
-
-Wizard::start(realpath(__DIR__ . '/../config/'))->dispatch();

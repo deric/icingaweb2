@@ -41,6 +41,13 @@ use \Zend_Controller_Action_HelperBroker;
 class Wizard
 {
     /**
+     * The current instance of this wizard
+     *
+     * @var Wizard
+     */
+    private static $instance;
+
+    /**
      * Application directory
      *
      * @var string
@@ -69,13 +76,16 @@ class Wizard
     private $frontController;
 
     /**
-     * Initialise a new wizard
+     * Return the current instance of this wizard
      *
-     * @param   string      $configDir      The path to the configuration directory to use
+     * @return  Wizard      The current instance or a new one
      */
-    public function __construct($configDir)
+    public static function getInstance()
     {
-        $this->configDir = $configDir;
+        if (!isset(self::$instance)) {
+            self::$instance = new Wizard();
+        }
+        return self::$instance;
     }
 
     /**
@@ -89,6 +99,16 @@ class Wizard
             $this->appDir = realpath('Application');
         }
         return $this->appDir;
+    }
+
+    /**
+     * Return the actual configuration directory
+     *
+     * @return  string
+     */
+    public function getConfigurationDir()
+    {
+        return $this->configDir;
     }
 
     /**
@@ -119,15 +139,17 @@ class Wizard
      */
     public static function start($configDir)
     {
-        $wizard = new Wizard($configDir);
-        $wizard->setup();
+        $wizard = self::getInstance();
+        $wizard->setup($configDir);
         return $wizard;
     }
 
     /**
      * Finalise this wizard's initialisation
+     *
+     * @param   string      $configDir      The path to the configuration directory to use
      */
-    private function setup()
+    private function setup($configDir)
     {
         Zend_Layout::startMvc(
             array(
@@ -137,6 +159,7 @@ class Wizard
         );
         $this->setupFrontController();
         $this->setupViewRenderer();
+        $this->configDir = $configDir;
     }
 
     /**

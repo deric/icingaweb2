@@ -5,6 +5,7 @@
 !.vagrant-puppet
 !public/.htaccess
 !public/.htaccess.in
+!install/configCheck/.htaccess
 !.gitkeep
 
 build/

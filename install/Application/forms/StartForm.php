@@ -26,18 +26,21 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-require_once realpath(__DIR__ . '/Application/functions.php');
+namespace Icinga\Installer\Pages;
 
-if (!is_zend_installed('1')) {
-    echo '<h3>Zend Framework not found!</h3>'
-        . 'The Zend Framework 1 is mandatory to successfully install and run this application.'
-        . ' Please go to <a href="http://framework.zend.com/downloads/latest#ZF1">zend.com</a>'
-        . ' and install its latest version.';
-    die;
+require_once realpath(__DIR__ . '/WizardForm.php');
+
+/**
+ * The starting page of the install wizard
+ */
+class StartForm extends WizardForm
+{
+    public function create()
+    {
+        $this->addNote(
+            'Some descriptive words about Icinga 2 Web and possibly a few words about what the new features are.'
+        );
+
+        $this->advance('Install');
+    }
 }
-
-require_once realpath(__DIR__ . '/Application/Wizard.php');
-
-use \Icinga\Installer\Wizard;
-
-Wizard::start(realpath(__DIR__ . '/../config/'))->dispatch();

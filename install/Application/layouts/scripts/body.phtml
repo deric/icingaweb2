@@ -1,16 +1,20 @@
-  <div class="row">
-    <div class="col-sm-12 col-xs-12 col-md-10 col-lg-10">
-      <?php echo $this->layout()->content; ?>
+<div class="row">
+  <div class="col-sm-1 col-xs-1 col-md-2 col-lg-2">
+<?php echo $this->render('menu.phtml') ?>
 
-    </div>
   </div>
-  <br/>
-  <div class="row">
-    <div class="col-md-12">
-      <div class="panel">
-        <div class="panel-body text-center">
-          Icinga 2 Web &copy; 2013 Icinga Team
-        </div>
+  <div class="col-sm-11 col-xs-11 col-md-10 col-lg-10" style="padding: 50px 25px 0 25px;">
+<?php echo $this->layout()->content; ?>
+
+  </div>
+</div>
+<br/>
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel">
+      <div class="panel-body text-center">
+        Icinga 2 Web &copy; 2013 Icinga Team
       </div>
     </div>
   </div>
+</div>

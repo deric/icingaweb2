@@ -1,0 +1,12 @@
+DirectoryIndex index.html
+
+ErrorDocument 403 "<h3>Your apache configuration seems to be correct!</h3>"
+
+<Files "index.html">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# The configuration options needed by Icinga 2 Web
+php_flag short_open_tag on
+RewriteEngine on
