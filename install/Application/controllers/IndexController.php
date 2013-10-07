@@ -27,14 +27,20 @@
 // {{{ICINGA_LICENSE_HEADER}}}
 
 require_once 'Zend/Session.php';
+require_once 'Zend/Session/Namespace.php';
 require_once 'Zend/Controller/Action.php';
+require_once realpath(__DIR__ . '/../Report.php');
+require_once realpath(__DIR__ . '/../forms/WizardForm.php');
 require_once realpath(__DIR__ . '/../forms/StartForm.php');
+require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
 
 use \Zend_Session;
+use \Zend_Session_Namespace;
 use \Zend_Controller_Action;
-use \Icinga\Installer\Wizard;
+use \Icinga\Installer\Report;
 use \Icinga\Installer\Pages\StartForm;
+use \Icinga\Installer\Pages\DbConfigForm;
 use \Icinga\Installer\Pages\RequirementsForm;
 
 /**
@@ -43,253 +49,42 @@ use \Icinga\Installer\Pages\RequirementsForm;
 class IndexController extends Zend_Controller_Action
 {
     /**
-     * Generate the requirement report
-     *
-     * @return  array
-     */
-    private function generateReport()
-    {
-        $report = array();
-
-        // Database extensions
-        $foundMysqlExtension = extension_loaded('mysql');
-        $foundPgsqlExtension = extension_loaded('pgsql');
-        array_push(
-            $report,
-            array(
-                'state'         => $foundMysqlExtension ? 1 : 0,
-                'note'          => $foundMysqlExtension ? 'OK' : 'FAIL',
-                'description'   => 'The MySQL php-extension is required to provide MySQL support'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $foundPgsqlExtension ? 1 : 0,
-                'note'          => $foundPgsqlExtension ? 'OK' : 'FAIL',
-                'description'   => 'The PostgreSQL php-extension is required to provide PostgreSQL support'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $foundMysqlExtension || $foundPgsqlExtension ? 1 : -1,
-                'note'          => $foundMysqlExtension || $foundPgsqlExtension ? 'OK' : 'FAIL',
-                'description'   => 'At least one database extension is required to install Icinga 2 Web'
-            )
-        );
-
-        // Database adapters
-        if (@include_once('Zend/Db/Adapter/Pdo/Mysql.php')) {
-            $foundMysqlAdapter = true;
-        } else {
-            $foundMysqlAdapter = false;
-        }
-        if (@include_once('Zend/Db/Adapter/Pdo/Pgsql.php')) {
-            $foundPgsqlAdapter = true;
-        } else {
-            $foundPgsqlAdapter = false;
-        }
-        array_push(
-            $report,
-            array(
-                'state'         => $foundMysqlAdapter ? 1 : 0,
-                'note'          => $foundMysqlAdapter ? 'OK' : 'FAIL',
-                'description'   => 'The Zend db adapter for MySQL is required to provide support for MySQL'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $foundPgsqlAdapter ? 1 : 0,
-                'note'          => $foundPgsqlAdapter ? 'OK' : 'FAIL',
-                'description'   => 'The Zend db adapter for PostgreSQL is required to provide support for PostgreSQL'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $foundMysqlAdapter || $foundPgsqlAdapter ? 1 : -1,
-                'note'          => $foundMysqlAdapter || $foundPgsqlAdapter ? 'OK' : 'FAIL',
-                'description'   => 'At least one database adapter is required to install Icinga 2 Web'
-            )
-        );
-
-        // LDAP extension
-        array_push(
-            $report,
-            array(
-                'state'         => extension_loaded('ldap') ? 1 : 0,
-                'note'          => extension_loaded('ldap') ? 'OK' : 'FAIL',
-                'description'   => 'The LDAP php-extension is required to provide AD authentication'
-            )
-        );
-
-        // PHP
-        $phpVersion = phpversion();
-        $phpVersionMatched = preg_match('#5\.(3|4).*#', $phpVersion);
-        array_push(
-            $report,
-            array(
-                'state'         => $phpVersionMatched ? 1 : -1,
-                'note'          => $phpVersionMatched ? 'OK' : 'FAIL',
-                'description'   => 'Icinga 2 Web requires PHP version 5.3.x or 5.4.x'
-            )
-        );
-
-        // Apache configuration
-        $apacheConfigIsValid = $this->checkApacheConfig();
-        if ($apacheConfigIsValid === null) {
-            $description = 'The apache configuration could not be checked! Please check it'
-                         . ' <a target="_blank" href="' . $this->view->baseUrl('configCheck') . '">manually</a>.';
-            array_push(
-                $report,
-                array(
-                    'state'         => 0,
-                    'note'          => 'WARNING',
-                    'description'   => $description,
-                    'help'          => 'An internal server error (500) probably indicates'
-                                       . ' that mod_rewrite is not enabled.'
-                )
-            );
-        } else {
-            array_push(
-                $report,
-                array(
-                    'state'         => $apacheConfigIsValid ? 1 : -1,
-                    'note'          => $apacheConfigIsValid ? 'OK' : 'FAIL',
-                    'description'   => 'Icinga 2 Web requires that the use of .htaccess files is allowed',
-                    'help'          => 'If this fails you might need to set AllowOverride appropriately or it'
-                                       . ' indicates that mod_rewrite is not enabled in your environment.'
-                )
-            );
-        }
-
-        // Write access to the configuration directory
-        $configDir = Wizard::getInstance()->getConfigurationDir();
-        $configBase = $this->checkDirectoryAccess($configDir);
-        $resources = $this->checkFileAccess($configDir . '/resources.ini');
-        $authentication = $this->checkFileAccess($configDir . '/authentication.ini');
-        $monitoringBase = $this->checkDirectoryAccess($configDir . '/modules/monitoring');
-        $backends = $this->checkFileAccess($configDir . '/modules/monitoring/backends.ini');
-        array_push(
-            $report,
-            array(
-                'state'         => $configBase ? 1 : -1,
-                'note'          => $configBase ? 'OK' : 'FAIL',
-                'description'   => 'The directory config/ needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $resources ? 1 : -1,
-                'note'          => $resources ? 'OK' : 'FAIL',
-                'description'   => 'The file config/resources.ini needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $authentication ? 1 : -1,
-                'note'          => $authentication ? 'OK' : 'FAIL',
-                'description'   => 'The file config/authentication.ini needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $monitoringBase ? 1 : -1,
-                'note'          => $monitoringBase ? 'OK' : 'FAIL',
-                'description'   => 'The directory config/modules/monitoring needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $report,
-            array(
-                'state'         => $backends ? 1 : -1,
-                'note'          => $backends ? 'OK' : 'FAIL',
-                'description'   => 'The file config/modules/monitoring/backends.ini'
-                                   . ' needs to be accessible by the PHP user'
-            )
-        );
-
-        return $report;
-    }
-
-    /**
-     * Return whether ../../configCheck/ is accessible
-     *
-     * @return  bool|null   Whether the configurations seems correct or cannot be checked
-     */
-    private function checkApacheConfig()
-    {
-        $hostUrl = 'http://' . $this->getRequest()->getHttpHost();
-        $headers = @get_headers($hostUrl . $this->view->baseUrl('/configCheck/'));
-        if ($headers) {
-            $statusInfo = explode(' ', $headers[0]);
-            return $statusInfo[1] === '403';
-        }
-    }
-
-    /**
-     * Return whether the given file is accessible
-     *
-     * @param   string  $path   The path to check
-     * @return  bool            Whether the path is read- and writable
-     */
-    private function checkFileAccess($path)
-    {
-        $readHandle = @fopen($path, 'r');
-        if (!$readHandle) {
-            return false;
-        }
-        fclose($readHandle);
-        $writeHandle = @fopen($path, 'a');
-        if (!$writeHandle) {
-            return false;
-        }
-        fclose($writeHandle);
-        return true;
-    }
-
-    /**
-     * Return whether the given directory is accessible
-     *
-     * @param   string  $path   The path to check
-     * @return  bool            Whether the path is read- and writable
-     */
-    private function checkDirectoryAccess($path)
-    {
-        $dirInfo = stat($path);
-        $authMode = $dirInfo['mode'] & 0777;
-        if ($authMode & 0660 != 0660) {
-            return false;
-        }
-        if (!@touch($path . '/.test')) {
-            return false;
-        } else {
-            unlink($path . '/.test');
-        }
-        return true;
-    }
-
-    /**
      * Application wide action
      */
     public function indexAction()
     {
-        Zend_Session::start();
-        $this->view->currentStep = $this->_getParam('progress', 1);
-        switch ($this->view->currentStep)
+        $namespace = new Zend_Session_Namespace('installation');
+        switch ($this->_getParam('progress', 1))
         {
             case 1:
                 Zend_Session::namespaceUnset('installation');
                 $this->showStart();
                 break;
             case 2:
-                $this->checkRequirements();
+                $this->checkRequirements($namespace);
                 break;
+            case 3:
+                $this->getDatabaseDetails($namespace);
+                break;
+            case 4:
+                if ($this->validateDatabaseDetails($namespace)) {
+                    $this->getAuthenticationDetails($namespace);
+                }
+                break;
+            case 5:
+                if ($this->validateAuthenticationDetails($namespace)) {
+                    $this->getBackendDetails($namespace);
+                }
+                break;
+            case 6:
+                if ($this->validateBackendDetails($namespace)) {
+                    $this->getConfirmation($namespace);
+                }
+                break;
+            case 7:
+                if ($this->validateConfirmation($namespace)) {
+                    $this->runInstallation();
+                }
         }
     }
 
@@ -300,15 +95,116 @@ class IndexController extends Zend_Controller_Action
     {
         $this->view->form = new StartForm();
         $this->view->form->setRequest($this->getRequest());
+        $this->view->form->advanceToNextPage();
     }
 
     /**
      * Report whether all requirements are fulfilled
      */
-    private function checkRequirements()
+    private function checkRequirements($namespace)
     {
+        $report = new Report();
         $this->view->form = new RequirementsForm();
         $this->view->form->setRequest($this->getRequest());
-        $this->view->form->setReport($this->generateReport());
+        $this->view->form->setReport($report);
+        if ($report->isOk()) {
+            $this->view->form->advanceToNextPage();
+        } else {
+            $this->view->form->restartWizard();
+        }
+        $namespace->report = $report->toJSON();
+    }
+
+    /**
+     * Prompt the user for database details
+     */
+    private function getDatabaseDetails($namespace)
+    {
+        $this->view->form = new DbConfigForm();
+        $this->view->form->setRequest($this->getRequest());
+        $this->view->form->setReport(Report::fromJSON($namespace->report));
+        $this->view->form->advanceToNextPage();
+    }
+
+    /**
+     * Validate the given database details
+     *
+     * @return  bool    Whether the details are valid
+     * @todo            Validate db connection and auth
+     */
+    private function validateDatabaseDetails($namespace)
+    {
+        $form = new DbConfigForm();
+        $form->setRequest($this->getRequest());
+        $form->setReport(Report::fromJSON($namespace->report));
+
+        if (!$form->isSubmittedAndValid()) {
+            $this->view->form = $form;
+            $form->stayOnPage();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Prompt the user for authentication details
+     */
+    private function getAuthenticationDetails()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Validate the given authentication details
+     *
+     * @return  bool    Whether the details are valid
+     */
+    private function validateAuthenticationDetails()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Prompt the user for backend details
+     */
+    private function getBackendDetails()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Validate the given backend details
+     *
+     * @return  bool    Whether the details are valid
+     */
+    private function validateBackendDetails()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Prompt the user to confirm all the provided details
+     */
+    private function getConfirmation()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Validate the confirmed install
+     *
+     * @return  bool    Whether the confirmation is valid
+     */
+    private function validateConfirmation()
+    {
+        throw new \Exception('Not implemented');
+    }
+
+    /**
+     * Process the entire details and run the installation
+     */
+    private function runInstallation()
+    {
+        throw new \Exception('Not implemented');
     }
 }

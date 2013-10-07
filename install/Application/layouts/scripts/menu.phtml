@@ -1,8 +1,24 @@
+<?php $currentStep = isset($this->form) ? $this->form->getCurrentStep() : 0; ?>
 <table class="table" style="margin: .7em;">
-  <tr class="<?php echo $this->currentStep == 1 ? 'active' : ($this->currentStep > 1 ? 'success' : '') ?>">
+  <tr class="<?php echo $currentStep == 1 ? 'active' : ($currentStep > 1 ? 'success' : '') ?>">
     <td>Start</td>
   </tr>
-  <tr class="<?php echo $this->currentStep == 2 ? 'active' : ($this->currentStep > 2 ? 'success' : '') ?>">
+  <tr class="<?php echo $currentStep == 2 ? 'active' : ($currentStep > 2 ? 'success' : '') ?>">
     <td>Requirements</td>
+  </tr>
+  <tr class="<?php echo $currentStep == 3 ? 'active' : ($currentStep > 3 ? 'success' : '') ?>">
+    <td>Database configuration</td>
+  </tr>
+  <tr class="<?php echo $currentStep == 4 ? 'active' : ($currentStep > 4 ? 'success' : '') ?>">
+    <td>Authentication & Preferences</td>
+  </tr>
+  <tr class="<?php echo $currentStep == 5 ? 'active' : ($currentStep > 5 ? 'success' : '') ?>">
+    <td>Backend configuration</td>
+  </tr>
+  <tr class="<?php echo $currentStep == 6 ? 'active' : ($currentStep > 6 ? 'success' : '') ?>">
+    <td>Overview / Confirmation</td>
+  </tr>
+  <tr class="<?php echo $currentStep == 7 ? 'active' : ($currentStep > 7 ? 'success' : '') ?>">
+    <td>End</td>
   </tr>
 </table>

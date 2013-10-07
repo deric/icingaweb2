@@ -28,78 +28,29 @@
 
 namespace Icinga\Installer\Pages;
 
-require_once realpath(__DIR__ . '/WizardForm.php');
-
 /**
  * Wizard-Page that displays a report about required software and extensions
  */
 class RequirementsForm extends WizardForm
 {
-    /**
-     * The report that is shown to the user
-     *
-     * @var array
-     */
-    private $report;
-
-    /**
-     * Set the report that should be shown to the user
-     *
-     * @param   array   $report     The report to display
-     */
-    public function setReport(array $report)
-    {
-        $this->report = $report;
-    }
-
     public function create()
     {
-        $canAdvance = true;
-        $tableContent = '';
-        foreach ($this->report as $requirementInfo) {
-            if ($requirementInfo['state'] === -1) {
-                $canAdvance = false;
-                $tableContent .= '<tr class="danger">';
-            } elseif ($requirementInfo['state'] === 0) {
-                $tableContent .= '<tr class="warning">';
-            } else {
-                $tableContent .= '<tr class="success">';
-            }
+        $this->addNote('Requirements', 1);
 
-            $helpText = '';
-            if (isset($requirementInfo['help']) && $requirementInfo['help']) {
-                $helpText = '<br /><span style="font-size:.8em">' . $requirementInfo['help'] . '</span>';
-            }
-            $tableContent .= '<td>' . $requirementInfo['description'] . $helpText . '</td>';
-            $tableContent .= '<td>' . $requirementInfo['note'] . '</td>';
-            $tableContent .= '</tr>';
-        }
+        $this->addNote($this->getReport()->render());
 
-        $this->addNote(
-            '<table class="table">'
-          . '  <thead>'
-          . '    <tr>'
-          . '      <th>Requirement</th>'
-          . '      <th>State</th>'
-          . '    </tr>'
-          . '  </thead>'
-          . '  <tbody>'
-          . $tableContent
-          . '  </tbody>'
-          . '</table>'
-        );
-
-        if ($canAdvance) {
+        if ($this->getReport()->isOk()) {
             $this->addNote(
                 '<span style="font-weight:bold;">All required software and packages available.</span>'
               . ' You can now start configuring your new Icinga 2 Web installation!'
             );
-            $this->advance('Continue');
+            $this->setSubmitLabel('Continue');
         } else {
             $this->addNote(
                 '<span style="font-weight:bold;">Some mandatory requirements are not fulfilled!</span>'
               . ' Please check your environment and install the appropriate software and packages.'
             );
+            $this->setSubmitLabel('Restart');
         }
     }
 }

@@ -28,8 +28,6 @@
 
 namespace Icinga\Installer\Pages;
 
-require_once realpath(__DIR__ . '/WizardForm.php');
-
 /**
  * The starting page of the install wizard
  */
@@ -37,10 +35,12 @@ class StartForm extends WizardForm
 {
     public function create()
     {
+        $this->addNote('Start', 1);
+
         $this->addNote(
             'Some descriptive words about Icinga 2 Web and possibly a few words about what the new features are.'
         );
 
-        $this->advance('Install');
+        $this->setSubmitLabel('Install');
     }
 }
