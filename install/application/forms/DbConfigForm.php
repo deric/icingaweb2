@@ -50,7 +50,6 @@ class DbConfigForm extends WizardForm
                 'value'         => 'icinga2web'
             )
         );
-
         $this->addElement(
             'select',
             'db_provider',
@@ -62,7 +61,6 @@ class DbConfigForm extends WizardForm
                 'multiOptions'  => $this->getAvailableProviders()
             )
         );
-
         $this->addElement(
             'text',
             'db_host',
@@ -74,7 +72,6 @@ class DbConfigForm extends WizardForm
                 'value'         => 'localhost'
             )
         );
-
         $this->addElement(
             'text',
             'db_port',
@@ -84,7 +81,6 @@ class DbConfigForm extends WizardForm
                 'allowEmpty'    => true
             )
         );
-
         $this->addElement(
             'text',
             'db_name',
@@ -96,7 +92,6 @@ class DbConfigForm extends WizardForm
                 'value'         => 'icinga2web'
             )
         );
-
         $this->addElement(
             'text',
             'db_username',
@@ -108,7 +103,6 @@ class DbConfigForm extends WizardForm
                 'value'         => 'icinga2web'
             )
         );
-
         $this->addElement(
             'password',
             'db_password',
@@ -119,7 +113,6 @@ class DbConfigForm extends WizardForm
                 'allowEmpty'    => false
             )
         );
-
         $this->addElement(
             'password',
             'db_password2',
@@ -132,26 +125,6 @@ class DbConfigForm extends WizardForm
         );
 
         $this->setSubmitLabel('Continue');
-    }
-
-    /**
-     * Return a list of available database providers
-     *
-     * @return  array
-     */
-    private function getAvailableProviders()
-    {
-        $reportInfo = $this->getReport()->toArray();
-        $providers = array();
-
-        if ($reportInfo['hasMysqlExtension'] && $reportInfo['hasMysqlAdapter']) {
-            array_push($providers, 'mysql');
-        }
-        if ($reportInfo['hasPgsqlExtension'] && $reportInfo['hasPgsqlAdapter']) {
-            array_push($providers, 'pgsql');
-        }
-
-        return $providers;
     }
 
     /**

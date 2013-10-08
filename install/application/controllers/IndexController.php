@@ -35,6 +35,7 @@ require_once realpath(__DIR__ . '/../forms/StartForm.php');
 require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/AuthConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
+require_once realpath(__DIR__ . '/../forms/BackendConfigForm.php');
 
 use \Zend_Session;
 use \Zend_Session_Namespace;
@@ -44,6 +45,7 @@ use \Icinga\Installer\Pages\StartForm;
 use \Icinga\Installer\Pages\DbConfigForm;
 use \Icinga\Installer\Pages\AuthConfigForm;
 use \Icinga\Installer\Pages\RequirementsForm;
+use \Icinga\Installer\Pages\BackendConfigForm;
 
 /**
  * Installation index controller
@@ -188,19 +190,36 @@ class IndexController extends Zend_Controller_Action
     /**
      * Prompt the user for backend details
      */
-    private function getBackendDetails()
+    private function getBackendDetails($session)
     {
-        throw new \Exception('Not implemented');
+        $this->view->form = new BackendConfigForm();
+        $this->view->form->setSession($session);
+        $this->view->form->setRequest($this->getRequest());
+        $this->view->form->setReport(Report::fromJSON($session->report));
+        $this->view->form->advanceToNextPage();
     }
 
     /**
      * Validate the given backend details
      *
      * @return  bool    Whether the details are valid
+     * @todo            Validate ido, dat and live connectivity
      */
-    private function validateBackendDetails()
+    private function validateBackendDetails($session)
     {
-        throw new \Exception('Not implemented');
+        $form = new BackendConfigForm();
+        $form->setSession($session);
+        $form->setRequest($this->getRequest());
+        $form->setReport(Report::fromJSON($session->report));
+
+        if (!$form->isSubmittedAndValid()) {
+            $this->view->form = $form;
+            $form->stayOnPage();
+            return false;
+        }
+
+        $session->backendDetails = $form->getDetails();
+        return true;
     }
 
     /**

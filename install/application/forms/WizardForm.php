@@ -155,4 +155,24 @@ class WizardForm extends Form
         }
         return $step;
     }
+
+    /**
+     * Return a list of available database providers
+     *
+     * @return  array
+     */
+    public function getAvailableProviders()
+    {
+        $reportInfo = $this->getReport()->toArray();
+        $providers = array();
+
+        if ($reportInfo['hasMysqlExtension'] && $reportInfo['hasMysqlAdapter']) {
+            $providers['mysql'] = 'MySQL';
+        }
+        if ($reportInfo['hasPgsqlExtension'] && $reportInfo['hasPgsqlAdapter']) {
+            $providers['pgsql'] = 'PostgreSQL';
+        }
+
+        return $providers;
+    }
 }

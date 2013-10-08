@@ -49,7 +49,6 @@ class AuthConfigForm extends WizardForm
                 'allowEmpty'    => false
             )
         );
-
         $this->addElement(
             'password',
             'auth_password',
@@ -60,7 +59,6 @@ class AuthConfigForm extends WizardForm
                 'allowEmpty'    => false
             )
         );
-
         $this->addElement(
             'password',
             'auth_password2',

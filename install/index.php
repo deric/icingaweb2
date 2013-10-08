@@ -26,7 +26,7 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-require_once realpath(__DIR__ . '/Application/functions.php');
+require_once realpath(__DIR__ . '/application/functions.php');
 
 if (!is_zend_installed('1')) {
     echo '<h3>Zend Framework not found!</h3>'
@@ -36,7 +36,7 @@ if (!is_zend_installed('1')) {
     die;
 }
 
-require_once realpath(__DIR__ . '/Application/Wizard.php');
+require_once realpath(__DIR__ . '/application/Wizard.php');
 
 use \Icinga\Installer\Wizard;
 
