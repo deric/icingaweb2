@@ -58,7 +58,7 @@ class DbConfigForm extends WizardForm
                 'helptext'      => 'Specifies the type or vendor of this database.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'multiOptions'  => $this->getAvailableProviders()
+                'multiOptions'  => $this->getDatabaseProviders()
             )
         );
         $this->addElement(

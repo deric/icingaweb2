@@ -161,7 +161,7 @@ class WizardForm extends Form
      *
      * @return  array
      */
-    public function getAvailableProviders()
+    public function getDatabaseProviders()
     {
         $reportInfo = $this->getReport()->toArray();
         $providers = array();
@@ -174,5 +174,30 @@ class WizardForm extends Form
         }
 
         return $providers;
+    }
+
+    /**
+     * Return a list of available preference stores
+     *
+     * @return  array
+     */
+    public function getPreferenceStores()
+    {
+        return array(
+            'type_ini'  => 'INI files',
+            'type_db'   => $this->getSession()->databaseDetails['db_resource']
+        );
+    }
+
+    /**
+     * Return a list of available resources
+     *
+     * @return  array
+     */
+    public function getResources()
+    {
+        return array(
+            $this->getSession()->databaseDetails['db_resource']
+        );
     }
 }

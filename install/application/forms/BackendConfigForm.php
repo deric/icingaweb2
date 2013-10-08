@@ -58,9 +58,11 @@ class BackendConfigForm extends WizardForm
                 'helptext'      => 'This is the database to use as the IDO backend.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'multiOptions'  => array(
-                    $this->getSession()->databaseDetails['db_resource'],
-                    'Other existing database'
+                'multiOptions'  => array_merge(
+                    $this->getResources(),
+                    array(
+                        -1 => '... Other existing database'
+                    )
                 )
             )
         );
@@ -87,7 +89,7 @@ class BackendConfigForm extends WizardForm
                     'helptext'      => 'Specifies the type or vendor of this database.',
                     'required'      => true,
                     'allowEmpty'    => false,
-                    'multiOptions'  => $this->getAvailableProviders()
+                    'multiOptions'  => $this->getDatabaseProviders()
                 )
             );
             $this->addElement(

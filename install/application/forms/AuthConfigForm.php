@@ -80,10 +80,7 @@ class AuthConfigForm extends WizardForm
                 'helptext'      => 'Please select how you want user preferences being stored.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'multiOptions'  => array(
-                    'ini',
-                    $this->getSession()->databaseDetails['db_resource']
-                )
+                'multiOptions'  => $this->getPreferenceStores()
             )
         );
 

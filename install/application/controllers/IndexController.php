@@ -35,6 +35,7 @@ require_once realpath(__DIR__ . '/../forms/StartForm.php');
 require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/AuthConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
+require_once realpath(__DIR__ . '/../forms/ConfirmationForm.php');
 require_once realpath(__DIR__ . '/../forms/BackendConfigForm.php');
 
 use \Zend_Session;
@@ -45,6 +46,7 @@ use \Icinga\Installer\Pages\StartForm;
 use \Icinga\Installer\Pages\DbConfigForm;
 use \Icinga\Installer\Pages\AuthConfigForm;
 use \Icinga\Installer\Pages\RequirementsForm;
+use \Icinga\Installer\Pages\ConfirmationForm;
 use \Icinga\Installer\Pages\BackendConfigForm;
 
 /**
@@ -225,9 +227,13 @@ class IndexController extends Zend_Controller_Action
     /**
      * Prompt the user to confirm all the provided details
      */
-    private function getConfirmation()
+    private function getConfirmation($session)
     {
-        throw new \Exception('Not implemented');
+        $this->view->form = new ConfirmationForm();
+        $this->view->form->setSession($session);
+        $this->view->form->setRequest($this->getRequest());
+        $this->view->form->setReport(Report::fromJSON($session->report));
+        $this->view->form->advanceToNextPage();
     }
 
     /**
@@ -235,9 +241,13 @@ class IndexController extends Zend_Controller_Action
      *
      * @return  bool    Whether the confirmation is valid
      */
-    private function validateConfirmation()
+    private function validateConfirmation($session)
     {
-        throw new \Exception('Not implemented');
+        $form = new ConfirmationForm();
+        $form->setSession($session);
+        $form->setRequest($this->getRequest());
+        $form->setReport(Report::fromJSON($session->report));
+        return $form->isSubmittedAndValid();
     }
 
     /**
