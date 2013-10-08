@@ -28,8 +28,6 @@
 
 namespace Icinga\Installer\Pages;
 
-require_once realpath(__DIR__ . '/WizardForm.php');
-
 /**
  * Wizard-Page that prompts the user for database configuration details
  */
@@ -43,7 +41,7 @@ class DbConfigForm extends WizardForm
 
         $this->addElement(
             'text',
-            'resource_name',
+            'db_resource',
             array(
                 'label'         => 'Resource name',
                 'helptext'      => 'This is the name internally used by Icinga 2 Web to identify this database store.',
@@ -112,14 +110,24 @@ class DbConfigForm extends WizardForm
         );
 
         $this->addElement(
-            'text',
+            'password',
             'db_password',
             array(
                 'label'         => 'Password',
                 'helptext'      => 'The password to use for authentication with this database.',
                 'required'      => true,
-                'allowEmpty'    => false,
-                'value'         => 'icinga'
+                'allowEmpty'    => false
+            )
+        );
+
+        $this->addElement(
+            'password',
+            'db_password2',
+            array(
+                'label'         => 'Password confirmation',
+                'helptext'      => 'Please enter the password a second time to avoid mistakes.',
+                'required'      => true,
+                'allowEmpty'    => false
             )
         );
 
@@ -144,5 +152,23 @@ class DbConfigForm extends WizardForm
         }
 
         return $providers;
+    }
+
+    /**
+     * Return the provided details
+     *
+     * @return  array
+     */
+    public function getDetails()
+    {
+        return array(
+            'db_resource'   => $this->getValue('db_resource'),
+            'db_provider'   => $this->getValue('db_provider'),
+            'db_host'       => $this->getValue('db_host'),
+            'db_port'       => $this->getValue('db_port'),
+            'db_name'       => $this->getValue('db_name'),
+            'db_username'   => $this->getValue('db_username'),
+            'db_password'   => $this->getValue('db_password')
+        );
     }
 }

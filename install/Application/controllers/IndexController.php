@@ -33,6 +33,7 @@ require_once realpath(__DIR__ . '/../Report.php');
 require_once realpath(__DIR__ . '/../forms/WizardForm.php');
 require_once realpath(__DIR__ . '/../forms/StartForm.php');
 require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
+require_once realpath(__DIR__ . '/../forms/AuthConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
 
 use \Zend_Session;
@@ -41,6 +42,7 @@ use \Zend_Controller_Action;
 use \Icinga\Installer\Report;
 use \Icinga\Installer\Pages\StartForm;
 use \Icinga\Installer\Pages\DbConfigForm;
+use \Icinga\Installer\Pages\AuthConfigForm;
 use \Icinga\Installer\Pages\RequirementsForm;
 
 /**
@@ -101,7 +103,7 @@ class IndexController extends Zend_Controller_Action
     /**
      * Report whether all requirements are fulfilled
      */
-    private function checkRequirements($namespace)
+    private function checkRequirements($session)
     {
         $report = new Report();
         $this->view->form = new RequirementsForm();
@@ -112,17 +114,17 @@ class IndexController extends Zend_Controller_Action
         } else {
             $this->view->form->restartWizard();
         }
-        $namespace->report = $report->toJSON();
+        $session->report = $report->toJSON();
     }
 
     /**
      * Prompt the user for database details
      */
-    private function getDatabaseDetails($namespace)
+    private function getDatabaseDetails($session)
     {
         $this->view->form = new DbConfigForm();
         $this->view->form->setRequest($this->getRequest());
-        $this->view->form->setReport(Report::fromJSON($namespace->report));
+        $this->view->form->setReport(Report::fromJSON($session->report));
         $this->view->form->advanceToNextPage();
     }
 
@@ -132,36 +134,55 @@ class IndexController extends Zend_Controller_Action
      * @return  bool    Whether the details are valid
      * @todo            Validate db connection and auth
      */
-    private function validateDatabaseDetails($namespace)
+    private function validateDatabaseDetails($session)
     {
         $form = new DbConfigForm();
         $form->setRequest($this->getRequest());
-        $form->setReport(Report::fromJSON($namespace->report));
+        $form->setReport(Report::fromJSON($session->report));
 
         if (!$form->isSubmittedAndValid()) {
             $this->view->form = $form;
             $form->stayOnPage();
             return false;
         }
+
+        $session->databaseDetails = $form->getDetails();
         return true;
     }
 
     /**
      * Prompt the user for authentication details
      */
-    private function getAuthenticationDetails()
+    private function getAuthenticationDetails($session)
     {
-        throw new \Exception('Not implemented');
+        $this->view->form = new AuthConfigForm();
+        $this->view->form->setSession($session);
+        $this->view->form->setRequest($this->getRequest());
+        $this->view->form->setReport(Report::fromJSON($session->report));
+        $this->view->form->advanceToNextPage();
     }
 
     /**
      * Validate the given authentication details
      *
      * @return  bool    Whether the details are valid
+     * @todo            Validate auth ... and ldap?
      */
-    private function validateAuthenticationDetails()
+    private function validateAuthenticationDetails($session)
     {
-        throw new \Exception('Not implemented');
+        $form = new AuthConfigForm();
+        $form->setSession($session);
+        $form->setRequest($this->getRequest());
+        $form->setReport(Report::fromJSON($session->report));
+
+        if (!$form->isSubmittedAndValid()) {
+            $this->view->form = $form;
+            $form->stayOnPage();
+            return false;
+        }
+
+        $session->authenticationDetails = $form->getDetails();
+        return true;
     }
 
     /**

@@ -39,6 +39,7 @@ require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Decorator/Boo
 
 use \Icinga\Web\Form;
 use \Icinga\Installer\Report;
+use \Zend_Session_Namespace;
 
 /**
  * Base form for every wizard page
@@ -51,6 +52,13 @@ class WizardForm extends Form
      * @var Report
      */
     private $report;
+
+    /**
+     * The user's session
+     *
+     * @var Zend_Session_Namespace
+     */
+    private $session;
 
     /**
      * Set the system report to use
@@ -70,6 +78,26 @@ class WizardForm extends Form
     public function getReport()
     {
         return $this->report;
+    }
+
+    /**
+     * Set the user's session
+     *
+     * @param   Zend_Session_Namespace  $namespace  The user's session
+     */
+    public function setSession(Zend_Session_Namespace $namespace)
+    {
+        $this->session = $namespace;
+    }
+
+    /**
+     * Return the user's session
+     *
+     * @return  Zend_Session_Namespace
+     */
+    public function getSession()
+    {
+        return $this->session;
     }
 
     /**
