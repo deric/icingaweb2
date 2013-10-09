@@ -5,9 +5,10 @@
  */
 namespace Icinga\Protocol\Ldap;
 
-use Icinga\Application\Platform;
+use \Exception;
+use \Icinga\Application\Platform;
 use \Icinga\Application\Config;
-use Icinga\Application\Logger as Log;
+use \Icinga\Application\Logger as Log;
 
 /**
  * Backend class managing all the LDAP stuff for you.
@@ -128,7 +129,7 @@ class Connection
     {
         $rows = $this->fetchAll($query, $fields);
         if (count($rows) !== 1) {
-            throw new \Exception(
+            throw new Exception(
                 sprintf(
                     'Cannot fetch single DN for %s',
                     $query
@@ -222,7 +223,7 @@ class Connection
             if (ldap_errno($this->ds) === self::LDAP_NO_SUCH_OBJECT) {
                 return false;
             }
-            throw new \Exception(
+            throw new Exception(
                 sprintf(
                     'LDAP query "%s" (root %s) failed: %s',
                     $query,
@@ -230,7 +231,6 @@ class Connection
                     ldap_error($this->ds)
                 )
             );
-            die('Query failed');
         }
         $list = array();
         if ($query instanceof Query) {
@@ -298,7 +298,7 @@ class Connection
                     Log::debug('LDAP STARTTLS succeeded');
                 } else {
                     Log::debug('LDAP STARTTLS failed: %s', ldap_error($ds));
-                    throw new \Exception(
+                    throw new Exception(
                         sprintf(
                             'LDAP STARTTLS failed: %s',
                             ldap_error($ds)
@@ -306,7 +306,7 @@ class Connection
                     );
                 }
             } elseif ($force_tls) {
-                throw new \Exception(
+                throw new Exception(
                     sprintf(
                         'TLS is required but not announced by %s',
                         $this->host_name
@@ -448,7 +448,7 @@ class Connection
         $r = @ldap_bind($this->ds, $this->bind_dn, $this->bind_pw);
 
         if (! $r) {
-            throw new \Exception(
+            throw new Exception(
                 sprintf(
                     'LDAP connection to %s:%s (%s / %s) failed: %s',
                     $this->hostname,

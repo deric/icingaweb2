@@ -28,6 +28,7 @@
 
 namespace Icinga\Installer\Pages;
 
+use \Zend_Config;
 use \Icinga\Installer\Validators\PasswordValidator;
 
 /**
@@ -132,6 +133,40 @@ class DbConfigForm extends WizardForm
         $this->getElement('db_password')->addValidator($passwordValidator);
 
         $this->setSubmitLabel('Continue');
+    }
+
+    /**
+     * Validate the form and check if the provided database details are correct
+     *
+     * @param   array    $data      The submitted details
+     * @return  bool                Whether the form and the details are valid
+     */
+    public function isValid($data)
+    {
+        $isValid = parent::isValid($data);
+
+        if ($isValid) {
+            $message = $this->checkDatabaseConnection(
+                new Zend_Config(
+                    array(
+                        'type'      => 'db',
+                        'db'        => $data['db_provider'],
+                        'dbname'    => $data['db_name'],
+                        'host'      => $data['db_host'],
+                        'port'      => $data['db_port'],
+                        'username'  => $data['db_username'],
+                        'password'  => $data['db_password']
+                    )
+                )
+            );
+            $isValid = $message === 'OK';
+
+            if (!$isValid) {
+                $this->addErrorNote('Database connection could not be established: ' . $message, 2);
+            }
+        }
+
+        return $isValid;
     }
 
     /**

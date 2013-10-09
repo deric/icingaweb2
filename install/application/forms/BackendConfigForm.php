@@ -28,6 +28,8 @@
 
 namespace Icinga\Installer\Pages;
 
+use \Zend_Config;
+
 /**
  * Wizard-page that prompts the user to configure the authentication
  */
@@ -61,13 +63,13 @@ class BackendConfigForm extends WizardForm
                 'multiOptions'  => array_merge(
                     $this->getResources(),
                     array(
-                        -1 => '... Other existing database'
+                        'other' => '... Other existing database'
                     )
                 )
             )
         );
 
-        if ($this->getRequest()->getPost('backend_selection') == 1) {
+        if ($this->getRequest()->getPost('backend_selection') === 'other') {
             $this->addNote('Connection settings for an existing database', 3);
 
             $this->addElement(
@@ -231,6 +233,40 @@ class BackendConfigForm extends WizardForm
 
         $this->enableAutoSubmit(array('backend_selection', 'backend_use_statusdat', 'backend_use_livestatus'));
         $this->setSubmitLabel('Continue');
+    }
+
+    /**
+     * Validate the form and check if the provided database details are correct
+     *
+     * @param   array    $data      The submitted details
+     * @return  bool                Whether the form and the details are valid
+     */
+    public function isValid($data)
+    {
+        $isValid = parent::isValid($data);
+
+        if ($isValid && $data['backend_selection'] === 'other') {
+            $message = $this->checkDatabaseConnection(
+                new Zend_Config(
+                    array(
+                        'type'      => 'db',
+                        'db'        => $data['backend_provider'],
+                        'dbname'    => $data['backend_dbname'],
+                        'host'      => $data['backend_host'],
+                        'port'      => $data['backend_port'],
+                        'username'  => $data['backend_dbuser'],
+                        'password'  => $data['backend_dbpass']
+                    )
+                )
+            );
+            $isValid = $message === 'OK';
+
+            if (!$isValid) {
+                $this->addErrorNote('Database connection could not be established: ' . $message, 5);
+            }
+        }
+
+        return $isValid;
     }
 
     /**

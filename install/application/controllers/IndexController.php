@@ -136,7 +136,6 @@ class IndexController extends Zend_Controller_Action
      * Validate the given database details
      *
      * @return  bool    Whether the details are valid
-     * @todo            Validate db connection
      */
     private function validateDatabaseDetails($session)
     {
@@ -170,7 +169,6 @@ class IndexController extends Zend_Controller_Action
      * Validate the given authentication details
      *
      * @return  bool    Whether the details are valid
-     * @todo            Validate ldap
      */
     private function validateAuthenticationDetails($session)
     {
@@ -205,7 +203,7 @@ class IndexController extends Zend_Controller_Action
      * Validate the given backend details
      *
      * @return  bool    Whether the details are valid
-     * @todo            Validate ido, dat and live connectivity
+     * @todo            Validate dat and live connectivity
      */
     private function validateBackendDetails($session)
     {

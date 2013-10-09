@@ -28,7 +28,9 @@
 
 namespace Icinga\Installer\Pages;
 
+require_once 'Zend/Db.php';
 require_once 'Zend/Form.php';
+require_once 'Zend/Config.php';
 require_once 'Zend/Form/Element/Xhtml.php';
 require_once 'Zend/Form/Element/Submit.php';
 require_once 'Zend/Form/Decorator/Abstract.php';
@@ -37,10 +39,22 @@ require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Element/Note.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Decorator/HelpText.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Decorator/BootstrapForm.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Util/ConfigAwareFactory.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Application/DbAdapterFactory.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Authentication/UserBackend.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Authentication/Backend/LdapUserBackend.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/Connection.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/LdapUtils.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/Query.php');
 
-use \Icinga\Web\Form;
-use \Icinga\Installer\Report;
+use \Exception;
+use \Zend_Config;
 use \Zend_Session_Namespace;
+use \Icinga\Web\Form;
+use \Icinga\Web\Form\Element\Note;
+use \Icinga\Installer\Report;
+use \Icinga\Application\DbAdapterFactory;
+use \Icinga\Authentication\Backend\LdapUserBackend;
 
 /**
  * Base form for every wizard page
@@ -60,6 +74,13 @@ class WizardForm extends Form
      * @var Zend_Session_Namespace
      */
     private $session;
+
+    /**
+     * Last used error note id
+     *
+     * @var int
+     */
+    private $lastErrorNoteId = 0;
 
     /**
      * Set the system report to use
@@ -200,5 +221,64 @@ class WizardForm extends Form
         return array(
             $this->getSession()->databaseDetails['db_resource']
         );
+    }
+
+    /**
+     * Add an error note at a specific location to the form
+     *
+     * @param   string  $message    The message to display
+     * @param   int     $position   Where to display the message
+     */
+    public function addErrorNote($message, $position)
+    {
+        $this->addElement(
+            new Note(
+                array(
+                    'escape'    => true,
+                    'order'     => $position + 1, // +1 due to the hidden progress element
+                    'name'      => sprintf('error_note_%s', $this->lastErrorNoteId++),
+                    'value'     => sprintf('<span style="color:red">%s</span>', $message)
+                )
+            )
+        );
+    }
+
+    /**
+     * Check whether a database connection can be established
+     *
+     * @param   Zend_Config     $config     The database connection details to use
+     * @return  string                      OK in case a connection has been established, otherwise the error message
+     */
+    public function checkDatabaseConnection(Zend_Config $config)
+    {
+        $db = DbAdapterFactory::createDbAdapter($config);
+
+        try {
+            $db->getConnection();
+        } catch (Exception $error) {
+            $errorMessage = $error->getMessage();
+        }
+
+        $succeeded = $db->isConnected();
+        $db->closeConnection();
+        return $succeeded ? 'OK' : $errorMessage;
+    }
+
+    /**
+     * Check whether it is possible to authenticate using LDAP with the given connection details
+     *
+     * @param   Zend_Config     $config     The LDAP connection details to use
+     * @return  string                      OK in case the connection was successful, otherwise the error message
+     */
+    public function checkLdapAuthentication(Zend_Config $config)
+    {
+        try {
+            $conn = new LdapUserBackend($config);
+            $conn->getUserCount();
+        } catch (Exception $error) {
+            return $error->getMessage();
+        }
+
+        return 'OK';
     }
 }

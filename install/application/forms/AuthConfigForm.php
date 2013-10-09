@@ -28,6 +28,7 @@
 
 namespace Icinga\Installer\Pages;
 
+use \Zend_Config;
 use \Icinga\Installer\Validators\PasswordValidator;
 
 /**
@@ -163,6 +164,39 @@ class AuthConfigForm extends WizardForm
         $this->getElement('auth_password')->addValidator($passwordValidator);
 
         $this->setSubmitLabel('Continue');
+    }
+
+    /**
+     * Validate the form and check if the provided LDAP details are correct
+     *
+     * @param   array    $data      The submitted details
+     * @return  bool                Whether the form and the details are valid
+     */
+    public function isValid($data)
+    {
+        $isValid = parent::isValid($data);
+
+        if ($isValid && isset($data['auth_use_ldap']) && $data['auth_use_ldap']) {
+            $message = $this->checkLdapAuthentication(
+                new Zend_Config(
+                    array(
+                        'hostname'              => $data['auth_ldap_hostname'],
+                        'root_dn'               => $data['auth_ldap_root_dn'],
+                        'bind_dn'               => $data['auth_ldap_bind_dn'],
+                        'bind_pw'               => $data['auth_ldap_bind_pw'],
+                        'user_class'            => $data['auth_ldap_user_class'],
+                        'user_name_attribute'   => $data['auth_ldap_user_name_attributes']
+                    )
+                )
+            );
+            $isValid = $message === 'OK';
+
+            if (!$isValid) {
+                $this->addErrorNote('Invalid LDAP authentication details: ' . $message, 9);
+            }
+        }
+
+        return $isValid;
     }
 
     /**
