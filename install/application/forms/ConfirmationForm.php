@@ -100,14 +100,14 @@ class ConfirmationForm extends WizardForm
                 '<br />',
                 array(
                     'Backend name: ' . $session->backendDetails['backend_name'],
-                    'Resource to use: ' . (in_array(intval($session->backendDetails['backend_selection']), $resources) ?
+                    'Resource to use: ' . (array_key_exists($session->backendDetails['backend_selection'], $resources) ?
                                            $resources[$session->backendDetails['backend_selection']] :
                                            'Other existing database')
                 )
             )
         );
 
-        if (!in_array(intval($session->backendDetails['backend_selection']), $resources)) {
+        if (!array_key_exists($session->backendDetails['backend_selection'], $resources)) {
             $this->addNote('Database store', 4);
 
             $this->addNote(

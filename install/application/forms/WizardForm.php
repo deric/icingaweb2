@@ -32,6 +32,7 @@ require_once 'Zend/Form.php';
 require_once 'Zend/Form/Element/Xhtml.php';
 require_once 'Zend/Form/Element/Submit.php';
 require_once 'Zend/Form/Decorator/Abstract.php';
+require_once realpath(__DIR__ . '/../validators/PasswordValidator.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Element/Note.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Web/Form/Decorator/HelpText.php');

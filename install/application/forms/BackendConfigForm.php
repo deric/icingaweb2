@@ -108,7 +108,8 @@ class BackendConfigForm extends WizardForm
                 array(
                     'label'         => 'Port',
                     'helptext'      => 'The port of this database. (Leave blank to use the default.)',
-                    'allowEmpty'    => true
+                    'allowEmpty'    => true,
+                    'validators'    => array('int')
                 )
             );
             $this->addElement(

@@ -28,6 +28,8 @@
 
 namespace Icinga\Installer\Pages;
 
+use \Icinga\Installer\Validators\PasswordValidator;
+
 /**
  * Wizard-page that prompts the user to configure the authentication
  */
@@ -108,7 +110,6 @@ class AuthConfigForm extends WizardForm
                         'allowEmpty'    => false
                     )
                 );
-
                 $this->addElement(
                     'text',
                     'auth_ldap_root_dn',
@@ -118,7 +119,6 @@ class AuthConfigForm extends WizardForm
                         'allowEmpty'    => false
                     )
                 );
-
                 $this->addElement(
                     'text',
                     'auth_ldap_bind_dn',
@@ -128,7 +128,6 @@ class AuthConfigForm extends WizardForm
                         'allowEmpty'    => false
                     )
                 );
-
                 $this->addElement(
                     'text',
                     'auth_ldap_bind_pw',
@@ -138,7 +137,6 @@ class AuthConfigForm extends WizardForm
                         'allowEmpty'    => false
                     )
                 );
-
                 $this->addElement(
                     'text',
                     'auth_ldap_user_class',
@@ -148,7 +146,6 @@ class AuthConfigForm extends WizardForm
                         'allowEmpty'    => false
                     )
                 );
-
                 $this->addElement(
                     'text',
                     'auth_ldap_user_name_attributes',
@@ -160,6 +157,10 @@ class AuthConfigForm extends WizardForm
                 );
             }
         }
+
+        $passwordValidator = new PasswordValidator();
+        $passwordValidator->setCounterpart('auth_password2');
+        $this->getElement('auth_password')->addValidator($passwordValidator);
 
         $this->setSubmitLabel('Continue');
     }

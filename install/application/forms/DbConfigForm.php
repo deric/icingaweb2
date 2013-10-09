@@ -28,6 +28,8 @@
 
 namespace Icinga\Installer\Pages;
 
+use \Icinga\Installer\Validators\PasswordValidator;
+
 /**
  * Wizard-Page that prompts the user for database configuration details
  */
@@ -78,7 +80,8 @@ class DbConfigForm extends WizardForm
             array(
                 'label'         => 'Port',
                 'helptext'      => 'The port of this database. (Leave blank to use the default.)',
-                'allowEmpty'    => true
+                'allowEmpty'    => true,
+                'validators'    => array('int')
             )
         );
         $this->addElement(
@@ -123,6 +126,10 @@ class DbConfigForm extends WizardForm
                 'allowEmpty'    => false
             )
         );
+
+        $passwordValidator = new PasswordValidator();
+        $passwordValidator->setCounterpart('db_password2');
+        $this->getElement('db_password')->addValidator($passwordValidator);
 
         $this->setSubmitLabel('Continue');
     }
