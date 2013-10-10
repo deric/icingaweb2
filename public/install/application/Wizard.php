@@ -103,7 +103,7 @@ class Wizard
     public function getApplicationDir()
     {
         if (!isset($this->appDir)) {
-            $this->appDir = realpath('application');
+            $this->appDir = realpath(__DIR__);
         }
         return $this->appDir;
     }

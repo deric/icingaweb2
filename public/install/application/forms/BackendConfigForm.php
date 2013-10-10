@@ -223,7 +223,7 @@ class BackendConfigForm extends WizardForm
                 $this->addErrorNote('Invalid Status.dat backend: ' . $message, 5);
             }
         } elseif ($isValid && $data['backend_selection'] === 'type_live') {
-            $message = $this->checkLiveStatus($data['backend_livestatus_socket']);
+            $message = $this->checkLiveStatus($data['backend_live_socket']);
             $isValid = $message === 'OK';
 
             if (!$isValid) {

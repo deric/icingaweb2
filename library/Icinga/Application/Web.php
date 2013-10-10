@@ -184,6 +184,19 @@ class Web extends ApplicationBootstrap
     }
 
     /**
+     * Return whether this app has been installed
+     *
+     * @param   string  $configDir
+     * @return  bool
+     */
+    public static function isInstalled($configDir)
+    {
+        $application = new Web($configDir);
+        $config = $application->setupConfig()->getConfig();
+        return $config->global->installed == 1;
+    }
+
+    /**
      * Prepare Zend MVC Base
      *
      * @return self
