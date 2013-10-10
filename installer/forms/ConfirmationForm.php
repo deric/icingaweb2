@@ -105,6 +105,7 @@ class ConfirmationForm extends WizardForm
 
         if ($session->backendDetails['backend_ido_host'] !== null) {
             $backendDetails = array(
+                'Backend type: Database',
                 'Database provider: ' . $dbProviders[$session->backendDetails['backend_ido_provider']],
                 'Hostname: ' . $session->backendDetails['backend_ido_host'],
                 'Port: ' . (empty($session->backendDetails['backend_ido_port']) ? 'Default port' :
@@ -115,11 +116,13 @@ class ConfirmationForm extends WizardForm
             );
         } elseif ($session->backendDetails['backend_dat_file'] !== null) {
             $backendDetails = array(
+                'Backend type: status.dat (local file)',
                 'Status file: ' . $session->backendDetails['backend_dat_file'],
                 'Objects file: ' . $session->backendDetails['backend_dat_objects']
             );
         } elseif ($session->backendDetails['backend_live_socket'] !== null) {
             $backendDetails = array(
+                'Backend type: Livestatus (local file)',
                 'Livestatus socket: ' . $session->backendDetails['backend_live_socket']
             );
         }

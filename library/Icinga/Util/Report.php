@@ -194,11 +194,13 @@ class Report
         $status = $this->getStatusCode('configCheck/');
         $this->validApacheConfig = $status === null ? null : $status === 403;
 
+        $documentRoot = realpath('.');
         $logDir = Wizard::getInstance()->getLoggingDir();
         $configDir = Wizard::getInstance()->getConfigurationDir();
         $this->pathAccess = array(
-            'config' => is_readable($configDir) && is_writable($configDir),
-            'log' => is_readable($logDir) && is_writable($logDir)
+            'root'      => is_readable($documentRoot) && is_writable($documentRoot),
+            'config'    => is_readable($configDir) && is_writable($configDir),
+            'log'       => is_readable($logDir) && is_writable($logDir)
         );
     }
 
@@ -357,6 +359,14 @@ class Report
             );
         }
 
+        array_push(
+            $content,
+            array(
+                'state' => $this->pathAccess['root'] ? 1 : -1,
+                'note'  => $this->pathAccess['root'] ? 'OK' : 'FAIL',
+                'desc'  => 'The document root needs to be read-/writable by the PHP user'
+            )
+        );
         array_push(
             $content,
             array(

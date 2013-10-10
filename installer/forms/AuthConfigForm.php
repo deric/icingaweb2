@@ -105,7 +105,7 @@ class AuthConfigForm extends WizardForm
                 'checkbox',
                 'auth_use_ldap',
                 array(
-                    'label' => 'Use LDAP as primary authentication provider:',
+                    'label' => 'Use LDAP as primary authentication provider',
                     'required' => true
                 )
             );

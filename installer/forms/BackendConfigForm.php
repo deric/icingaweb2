@@ -73,7 +73,7 @@ class BackendConfigForm extends WizardForm
             )
         );
 
-        $this->addNote('Detailed backend information', 2);
+        $this->addNote('Connection details', 2);
 
         $backendSelection = $this->getRequest()->getPost('backend_selection');
         if ($backendSelection === null || $backendSelection === 'type_ido') {
