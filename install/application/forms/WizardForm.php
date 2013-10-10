@@ -203,8 +203,9 @@ class WizardForm extends Form
     public function getPreferenceStores()
     {
         return array(
-            'type_ini'  => 'INI files',
-            'type_db'   => $this->getSession()->databaseDetails['db_resource']
+            'type_ini'  => 'File system: INI files',
+            'type_db'   => 'Database: ' . $this->getSession()->databaseDetails['db_resource'],
+            'type_none' => 'Disable storage of user preferences across sessions'
         );
     }
 

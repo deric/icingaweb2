@@ -48,8 +48,6 @@ class BackendConfigForm extends WizardForm
             ' Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
         );
 
-        $this->addNote('IDO - Icinga Data Out', 2);
-
         $this->addElement(
             'text',
             'backend_name',
@@ -57,43 +55,31 @@ class BackendConfigForm extends WizardForm
                 'label'         => 'Backend name',
                 'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
                 'required'      => true,
-                'allowEmpty'    => false,
-                'value'         => 'icingaido'
+                'allowEmpty'    => false
             )
         );
         $this->addElement(
             'select',
             'backend_selection',
             array(
-                'label'         => 'Resource to use',
-                'helptext'      => 'This is the database to use as the IDO backend.',
+                'label'         => 'Type of backend to use',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'multiOptions'  => array_merge(
-                    $this->getResources(),
-                    array(
-                        'other' => '... Other existing database'
-                    )
+                'multiOptions'  => array(
+                    'type_ido'  => 'IDO - Icinga Data Out',
+                    'type_dat'  => 'Local file: status.dat',
+                    'type_live' => 'Livestatus'
                 )
             )
         );
 
-        if ($this->getRequest()->getPost('backend_selection') === 'other') {
-            $this->addNote('Connection settings for an existing database', 3);
+        $this->addNote('Detailed backend information', 2);
 
-            $this->addElement(
-                'text',
-                'backend_resource',
-                array(
-                    'label'         => 'Resource name',
-                    'helptext'      => 'This is the name internally used by icingaweb to identify this database store.',
-                    'required'      => true,
-                    'allowEmpty'    => false
-                )
-            );
+        $backendSelection = $this->getRequest()->getPost('backend_selection');
+        if ($backendSelection === null || $backendSelection === 'type_ido') {
             $this->addElement(
                 'select',
-                'backend_provider',
+                'backend_ido_provider',
                 array(
                     'label'         => 'Database provider',
                     'helptext'      => 'Specifies the type or vendor of this database.',
@@ -104,7 +90,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'text',
-                'backend_host',
+                'backend_ido_host',
                 array(
                     'label'         => 'Hostname',
                     'helptext'      => 'The host of this database.',
@@ -114,7 +100,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'text',
-                'backend_port',
+                'backend_ido_port',
                 array(
                     'label'         => 'Port',
                     'helptext'      => 'The port of this database. (Leave blank to use the default.)',
@@ -124,7 +110,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'text',
-                'backend_dbname',
+                'backend_ido_dbname',
                 array(
                     'label'         => 'Database name',
                     'helptext'      => 'The name of this database.',
@@ -134,7 +120,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'text',
-                'backend_dbuser',
+                'backend_ido_dbuser',
                 array(
                     'label'         => 'Username',
                     'helptext'      => 'The username to use for authentication with this database.',
@@ -144,7 +130,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'password',
-                'backend_dbpass',
+                'backend_ido_dbpass',
                 array(
                     'label'         => 'Password',
                     'helptext'      => 'The password to use for authentication with this database.',
@@ -152,36 +138,10 @@ class BackendConfigForm extends WizardForm
                     'allowEmpty'    => false
                 )
             );
-        }
-
-        $this->addNote('Additional backends', 2);
-
-        $this->addNote('Status.dat', 3);
-
-        $this->addElement(
-            'checkbox',
-            'backend_use_statusdat',
-            array(
-                'label'     => 'Use backend',
-                'required'  => true
-            )
-        );
-
-        if ($this->getRequest()->getPost('backend_use_statusdat')) {
+        } elseif ($backendSelection === 'type_dat') {
             $this->addElement(
                 'text',
-                'backend_statusdat_name',
-                array(
-                    'label'         => 'Backend name',
-                    'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
-                    'required'      => true,
-                    'allowEmpty'    => false,
-                    'value'         => 'icingadat'
-                )
-            );
-            $this->addElement(
-                'text',
-                'backend_statusdat_file',
+                'backend_dat_file',
                 array(
                     'label'         => 'Status file',
                     'helptext'      => 'The path to the local status.dat file.',
@@ -192,7 +152,7 @@ class BackendConfigForm extends WizardForm
             );
             $this->addElement(
                 'text',
-                'backend_statusdat_objects',
+                'backend_dat_objects',
                 array(
                     'label'         => 'Objects file',
                     'helptext'      => 'The path to the local objects.cache file.',
@@ -201,34 +161,10 @@ class BackendConfigForm extends WizardForm
                     'value'         => '/usr/local/icinga/var/objects.cache'
                 )
             );
-        }
-
-        $this->addNote('Livestatus', 3);
-
-        $this->addElement(
-            'checkbox',
-            'backend_use_livestatus',
-            array(
-                'label'     => 'Use backend',
-                'required'  => true
-            )
-        );
-
-        if ($this->getRequest()->getPost('backend_use_livestatus')) {
+        } elseif ($backendSelection === 'type_live') {
             $this->addElement(
                 'text',
-                'backend_livestatus_name',
-                array(
-                    'label'         => 'Backend name',
-                    'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
-                    'required'      => true,
-                    'allowEmpty'    => false,
-                    'value'         => 'icingalive'
-                )
-            );
-            $this->addElement(
-                'text',
-                'backend_livestatus_socket',
+                'backend_live_socket',
                 array(
                     'label'         => 'Livestatus socket',
                     'helptext'      => 'The path to the local livestatus socket.',
@@ -239,7 +175,7 @@ class BackendConfigForm extends WizardForm
             );
         }
 
-        $this->enableAutoSubmit(array('backend_selection', 'backend_use_statusdat', 'backend_use_livestatus'));
+        $this->enableAutoSubmit(array('backend_selection'));
         $this->setSubmitLabel('Continue');
     }
 
@@ -253,17 +189,17 @@ class BackendConfigForm extends WizardForm
     {
         $isValid = parent::isValid($data);
 
-        if ($isValid && $data['backend_selection'] === 'other') {
+        if ($isValid && $data['backend_selection'] === 'type_ido') {
             $message = $this->checkDatabaseConnection(
                 new Zend_Config(
                     array(
                         'type'      => 'db',
-                        'db'        => $data['backend_provider'],
-                        'dbname'    => $data['backend_dbname'],
-                        'host'      => $data['backend_host'],
-                        'port'      => $data['backend_port'],
-                        'username'  => $data['backend_dbuser'],
-                        'password'  => $data['backend_dbpass']
+                        'db'        => $data['backend_ido_provider'],
+                        'dbname'    => $data['backend_ido_dbname'],
+                        'host'      => $data['backend_ido_host'],
+                        'port'      => $data['backend_ido_port'],
+                        'username'  => $data['backend_ido_dbuser'],
+                        'password'  => $data['backend_ido_dbpass']
                     )
                 )
             );
@@ -272,30 +208,26 @@ class BackendConfigForm extends WizardForm
             if (!$isValid) {
                 $this->addErrorNote('Database connection could not be established: ' . $message, 5);
             }
-        }
-
-        if ($isValid && $data['backend_use_statusdat']) {
+        } elseif ($isValid && $data['backend_selection'] === 'type_dat') {
             $message = $this->checkStatusDat(
                 new Zend_Config(
                     array(
-                        'status_file'   => $data['backend_statusdat_file'],
-                        'objects_file'  => $data['backend_statusdat_objects']
+                        'status_file'   => $data['backend_dat_file'],
+                        'objects_file'  => $data['backend_dat_objects']
                     )
                 )
             );
             $isValid = $message === 'OK';
 
             if (!$isValid) {
-                $this->addErrorNote('Invalid Status.dat backend: ' . $message, 2);
+                $this->addErrorNote('Invalid Status.dat backend: ' . $message, 5);
             }
-        }
-
-        if ($isValid && $data['backend_use_livestatus']) {
+        } elseif ($isValid && $data['backend_selection'] === 'type_live') {
             $message = $this->checkLiveStatus($data['backend_livestatus_socket']);
             $isValid = $message === 'OK';
 
             if (!$isValid) {
-                $this->addErrorNote('Invalid Livestatus backend: ' . $message, 2);
+                $this->addErrorNote('Invalid Livestatus backend: ' . $message, 5);
             }
         }
 
@@ -310,22 +242,16 @@ class BackendConfigForm extends WizardForm
     public function getDetails()
     {
         return array(
-            'backend_name'              => $this->getValue('backend_name'),
-            'backend_selection'         => $this->getValue('backend_selection'),
-            'backend_resource'          => $this->getValue('backend_resource'),
-            'backend_provider'          => $this->getValue('backend_provider'),
-            'backend_host'              => $this->getValue('backend_host'),
-            'backend_port'              => $this->getValue('backend_port'),
-            'backend_dbname'            => $this->getValue('backend_dbname'),
-            'backend_dbuser'            => $this->getValue('backend_dbuser'),
-            'backend_dbpass'            => $this->getValue('backend_dbpass'),
-            'backend_use_statusdat'     => $this->getValue('backend_use_statusdat'),
-            'backend_statusdat_name'    => $this->getValue('backend_statusdat_name'),
-            'backend_statusdat_file'    => $this->getValue('backend_statusdat_file'),
-            'backend_statusdat_objects' => $this->getValue('backend_statusdat_objects'),
-            'backend_use_livestatus'    => $this->getValue('backend_use_livestatus'),
-            'backend_livestatus_name'   => $this->getValue('backend_livestatus_name'),
-            'backend_livestatus_socket' => $this->getValue('backend_livestatus_socket')
+            'backend_name'          => $this->getValue('backend_name'),
+            'backend_ido_provider'  => $this->getValue('backend_ido_provider'),
+            'backend_ido_host'      => $this->getValue('backend_ido_host'),
+            'backend_ido_port'      => $this->getValue('backend_ido_port'),
+            'backend_ido_dbname'    => $this->getValue('backend_ido_dbname'),
+            'backend_ido_dbuser'    => $this->getValue('backend_ido_dbuser'),
+            'backend_ido_dbpass'    => $this->getValue('backend_ido_dbpass'),
+            'backend_dat_file'      => $this->getValue('backend_dat_file'),
+            'backend_dat_objects'   => $this->getValue('backend_dat_objects'),
+            'backend_live_socket'   => $this->getValue('backend_live_socket')
         );
     }
 }

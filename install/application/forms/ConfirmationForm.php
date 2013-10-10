@@ -36,11 +36,19 @@ class ConfirmationForm extends WizardForm
     public function create()
     {
         $session = $this->getSession();
-        $resources = $this->getResources();
         $dbProviders = $this->getDatabaseProviders();
         $preferenceStores = $this->getPreferenceStores();
 
         $this->addNote('Overview / Confirmation', 1);
+
+        $this->addNote(
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut' .
+            ' labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores' .
+            ' et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem' .
+            ' ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et' .
+            ' dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.' .
+            ' Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
+        );
 
         $this->addNote('Database configuration', 2);
         $this->addNote(
@@ -94,71 +102,37 @@ class ConfirmationForm extends WizardForm
         }
 
         $this->addNote('Backend configuration', 2);
-        $this->addNote('IDO - Icinga Data Out', 3);
-        $this->addNote(
-            implode(
-                '<br />',
-                array(
-                    'Backend name: ' . $session->backendDetails['backend_name'],
-                    'Resource to use: ' . (array_key_exists($session->backendDetails['backend_selection'], $resources) ?
-                                           $resources[$session->backendDetails['backend_selection']] :
-                                           'Other existing database')
-                )
-            )
-        );
 
-        if (!array_key_exists($session->backendDetails['backend_selection'], $resources)) {
-            $this->addNote('Database store', 4);
-
-            $this->addNote(
-                implode(
-                    '<br />',
-                    array(
-                        'Resource name: ' . $session->backendDetails['backend_resource'],
-                        'Database provider: ' . $dbProviders[$session->backendDetails['backend_provider']],
-                        'Hostname: ' . $session->backendDetails['backend_host'],
-                        'Port: ' . (empty($session->backendDetails['backend_port']) ? 'Default port' :
-                                    $session->backendDetails['backend_port']),
-                        'Database name: ' . $session->backendDetails['backend_dbname'],
-                        'Username: ' . $session->backendDetails['backend_dbuser'],
-                        'Password: ' . preg_replace('#.#', '*', $session->backendDetails['backend_dbpass'])
-                    )
-                )
+        if ($session->backendDetails['backend_ido_host'] !== null) {
+            $backendDetails = array(
+                'Database provider: ' . $session->backendDetails['backend_ido_provider'],
+                'Hostname: ' . $session->backendDetails['backend_ido_host'],
+                'Port: ' . (empty($session->backendDetails['backend_ido_port']) ? 'Default port' :
+                            $session->backendDetails['backend_ido_port']),
+                'Database name: ' . $session->backendDetails['backend_ido_dbname'],
+                'Username: ' . $session->backendDetails['backend_ido_dbuser'],
+                'Password: ' . preg_replace('#.#', '*', $session->backendDetails['backend_ido_dbpass'])
+            );
+        } elseif ($session->backendDetails['backend_dat_file'] !== null) {
+            $backendDetails = array(
+                'Status file: ' . $session->backendDetails['backend_dat_file'],
+                'Objects file: ' . $session->backendDetails['backend_dat_objects']
+            );
+        } elseif ($session->backendDetails['backend_live_socket'] !== null) {
+            $backendDetails = array(
+                'Livestatus socket: ' . $session->backendDetails['backend_live_socket']
             );
         }
 
-        if ($session->backendDetails['backend_use_statusdat'] || $session->backendDetails['backend_use_livestatus']) {
-            $this->addNote('Additional backends', 3);
-
-            if ($session->backendDetails['backend_use_statusdat']) {
-                $this->addNote('Status.dat', 4);
-
-                $this->addNote(
-                    implode(
-                        '<br />',
-                        array(
-                            'Backend name: ' . $session->backendDetails['backend_statusdat_name'],
-                            'Status file: ' . $session->backendDetails['backend_statusdat_file'],
-                            'Objects file: ' . $session->backendDetails['backend_statusdat_objects']
-                        )
-                    )
-                );
-            }
-
-            if ($session->backendDetails['backend_use_livestatus']) {
-                $this->addNote('Livestatus', 4);
-
-                $this->addNote(
-                    implode(
-                        '<br />',
-                        array(
-                            'Backend name: ' . $session->backendDetails['backend_livestatus_name'],
-                            'Livestatus socket: ' . $session->backendDetails['backend_livestatus_socket']
-                        )
-                    )
-                );
-            }
-        }
+        $this->addNote(
+            implode(
+                '<br />',
+                array_merge(
+                    array('Backend name: ' . $session->backendDetails['backend_name']),
+                    $backendDetails
+                )
+            )
+        );
 
         $this->setSubmitLabel('Start installation');
     }
