@@ -46,6 +46,10 @@ require_once realpath(__DIR__ . '/../../../library/Icinga/Authentication/Backend
 require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/Connection.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/LdapUtils.php');
 require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Ldap/Query.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Data/DatasourceInterface.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Statusdat/IReader.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Protocol/Statusdat/Reader.php');
+require_once realpath(__DIR__ . '/../../../library/Icinga/Exception/ConfigurationError.php');
 
 use \Exception;
 use \Zend_Config;
@@ -55,6 +59,7 @@ use \Icinga\Web\Form\Element\Note;
 use \Icinga\Installer\Report;
 use \Icinga\Application\DbAdapterFactory;
 use \Icinga\Authentication\Backend\LdapUserBackend;
+use \Icinga\Protocol\Statusdat\Reader as StatusdatReader;
 
 /**
  * Base form for every wizard page
@@ -279,6 +284,35 @@ class WizardForm extends Form
             return $error->getMessage();
         }
 
+        return 'OK';
+    }
+
+    /**
+     * Check the existence of the given paths and whether their content is valid
+     *
+     * @param   Zend_Config     $config     The protocol information to use
+     * @return  string                      OK in case both paths are valid, otherwise an error message
+     */
+    public function checkStatusDat(Zend_Config $config)
+    {
+        try {
+            new StatusdatReader($config);
+        } catch (Exception $error) {
+            return $error->getMessage();
+        }
+
+        return 'OK';
+    }
+
+    /**
+     * Check whether the given path points to a valid Livestatus socket
+     *
+     * @param   string  $socketPath     The path to the Livestatus socket
+     * @return  string                  OK in case the socket is valid, otherwise the error message
+     * @todo                            Implement validation logic #4832
+     */
+    public function checkLiveStatus($socketPath)
+    {
         return 'OK';
     }
 }

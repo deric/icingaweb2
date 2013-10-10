@@ -236,7 +236,7 @@ class BackendConfigForm extends WizardForm
     }
 
     /**
-     * Validate the form and check if the provided database details are correct
+     * Validate the form and check if the provided backend details are correct
      *
      * @param   array    $data      The submitted details
      * @return  bool                Whether the form and the details are valid
@@ -263,6 +263,31 @@ class BackendConfigForm extends WizardForm
 
             if (!$isValid) {
                 $this->addErrorNote('Database connection could not be established: ' . $message, 5);
+            }
+        }
+
+        if ($isValid && $data['backend_use_statusdat']) {
+            $message = $this->checkStatusDat(
+                new Zend_Config(
+                    array(
+                        'status_file'   => $data['backend_statusdat_file'],
+                        'objects_file'  => $data['backend_statusdat_objects']
+                    )
+                )
+            );
+            $isValid = $message === 'OK';
+
+            if (!$isValid) {
+                $this->addErrorNote('Invalid Status.dat backend: ' . $message, 2);
+            }
+        }
+
+        if ($isValid && $data['backend_use_livestatus']) {
+            $message = $this->checkLiveStatus($data['backend_livestatus_socket']);
+            $isValid = $message === 'OK';
+
+            if (!$isValid) {
+                $this->addErrorNote('Invalid Livestatus backend: ' . $message, 2);
             }
         }
 

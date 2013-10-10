@@ -203,7 +203,6 @@ class IndexController extends Zend_Controller_Action
      * Validate the given backend details
      *
      * @return  bool    Whether the details are valid
-     * @todo            Validate dat and live connectivity
      */
     private function validateBackendDetails($session)
     {
