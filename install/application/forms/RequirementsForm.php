@@ -42,7 +42,7 @@ class RequirementsForm extends WizardForm
         if ($this->getReport()->isOk()) {
             $this->addNote(
                 '<span style="font-weight:bold;">All required software and packages available.</span>'
-              . ' You can now start configuring your new Icinga 2 Web installation!'
+              . ' You can now start configuring your new icingaweb installation!'
             );
             $this->setSubmitLabel('Continue');
         } else {

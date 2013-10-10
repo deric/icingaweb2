@@ -40,6 +40,15 @@ class AuthConfigForm extends WizardForm
     {
         $this->addNote('Authentication & Preferences', 1);
 
+        $this->addNote(
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut' .
+            ' labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores' .
+            ' et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem' .
+            ' ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et' .
+            ' dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.' .
+            ' Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
+        );
+
         $this->addNote('Default admin user', 2);
 
         $this->addElement(
@@ -49,7 +58,8 @@ class AuthConfigForm extends WizardForm
                 'label'         => 'Username',
                 'helptext'      => 'The name of the default admin user.',
                 'required'      => true,
-                'allowEmpty'    => false
+                'allowEmpty'    => false,
+                'value'         => 'icingaadmin'
             )
         );
         $this->addElement(
@@ -192,7 +202,7 @@ class AuthConfigForm extends WizardForm
             $isValid = $message === 'OK';
 
             if (!$isValid) {
-                $this->addErrorNote('Invalid LDAP authentication details: ' . $message, 9);
+                $this->addErrorNote('Invalid LDAP authentication details: ' . $message, 10);
             }
         }
 

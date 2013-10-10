@@ -62,6 +62,13 @@ class Wizard
     private $configDir;
 
     /**
+     * Logging directory
+     *
+     * @var string
+     */
+    private $logDir;
+
+    /**
      * View object
      *
      * @var View
@@ -112,6 +119,16 @@ class Wizard
     }
 
     /**
+     * Return the actual logging directory
+     *
+     * @return  string
+     */
+    public function getLoggingDir()
+    {
+        return $this->logDir;
+    }
+
+    /**
      * Return the actual front controller
      *
      * @return  Zend_Controller_Front
@@ -137,10 +154,10 @@ class Wizard
      * @param   string      $configDir      The path to the configuration directory to use
      * @return  self
      */
-    public static function start($configDir)
+    public static function start($configDir, $logDir)
     {
         $wizard = self::getInstance();
-        $wizard->setup($configDir);
+        $wizard->setup($configDir, $logDir);
         return $wizard;
     }
 
@@ -148,8 +165,9 @@ class Wizard
      * Finalise this wizard's initialisation
      *
      * @param   string      $configDir      The path to the configuration directory to use
+     * @param   string      $logDir         The path to the logging directory to use
      */
-    private function setup($configDir)
+    private function setup($configDir, $logDir)
     {
         Zend_Layout::startMvc(
             array(
@@ -160,6 +178,7 @@ class Wizard
         $this->setupFrontController();
         $this->setupViewRenderer();
         $this->configDir = $configDir;
+        $this->logDir = $logDir;
     }
 
     /**

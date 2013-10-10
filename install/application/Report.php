@@ -194,9 +194,11 @@ class Report
         $status = $this->getStatusCode('configCheck/');
         $this->validApacheConfig = $status === null ? null : $status === 403;
 
+        $logDir = Wizard::getInstance()->getLoggingDir();
         $configDir = Wizard::getInstance()->getConfigurationDir();
         $this->pathAccess = array(
-            'config' => is_readable($configDir) && is_writable($configDir)
+            'config' => is_readable($configDir) && is_writable($configDir),
+            'log' => is_readable($logDir) && is_writable($logDir)
         );
     }
 
@@ -249,7 +251,7 @@ class Report
                 array(
                     'state' => -1,
                     'note'  => 'FAIL',
-                    'desc'  => 'At least one database extension is required to install Icinga 2 Web'
+                    'desc'  => 'At least one database extension is required to install icingaweb'
                 )
             );
         }
@@ -277,7 +279,7 @@ class Report
                 array(
                     'state' => -1,
                     'note'  => 'FAIL',
-                    'desc'  => 'At least one database adapter is required to install Icinga 2 Web'
+                    'desc'  => 'At least one database adapter is required to install icingaweb'
                 )
             );
         }
@@ -319,7 +321,7 @@ class Report
             array(
                 'state' => $this->correctPhpVersion ? 1 : -1,
                 'note'  => $this->correctPhpVersion ? 'OK' : 'FAIL',
-                'desc'  => 'Icinga 2 Web requires PHP version 5.3.x or 5.4.x'
+                'desc'  => 'icingaweb requires PHP version 5.3.x or 5.4.x'
             )
         );
         array_push(
@@ -327,7 +329,7 @@ class Report
             array(
                 'state' => $this->shortOpenTagEnabled ? 1 : 0,
                 'note'  => $this->shortOpenTagEnabled ? 'OK' : 'WARNING',
-                'desc'  => 'Icinga 2 Web makes use of the PHP short open tag &lt;?='
+                'desc'  => 'icingaweb makes use of the PHP short open tag &lt;?='
             )
         );
 
@@ -348,7 +350,7 @@ class Report
                 array(
                     'state' => $this->validApacheConfig ? 1 : -1,
                     'note'  => $this->validApacheConfig ? 'OK' : 'FAIL',
-                    'desc'  => 'Icinga 2 Web requires that the use of .htaccess files is allowed',
+                    'desc'  => 'icingaweb requires that the use of .htaccess files is allowed',
                     'help'  => 'If this fails you might need to set AllowOverride appropriately or it'
                              . ' indicates that mod_rewrite is not enabled in your environment.'
                 )
@@ -361,6 +363,14 @@ class Report
                 'state' => $this->pathAccess['config'] ? 1 : -1,
                 'note'  => $this->pathAccess['config'] ? 'OK' : 'FAIL',
                 'desc'  => 'The configuration directory needs to be read-/writable by the PHP user'
+            )
+        );
+        array_push(
+            $content,
+            array(
+                'state' => $this->pathAccess['log'] ? 1 : 0,
+                'note'  => $this->pathAccess['log'] ? 'OK' : 'WARNING',
+                'desc'  => 'The log directory needs to be read-/writable by the PHP user'
             )
         );
 

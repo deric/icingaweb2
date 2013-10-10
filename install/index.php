@@ -40,4 +40,4 @@ require_once realpath(__DIR__ . '/application/Wizard.php');
 
 use \Icinga\Installer\Wizard;
 
-Wizard::start(realpath(__DIR__ . '/../config/'))->dispatch();
+Wizard::start(realpath(__DIR__ . '/../config/'), realpath(__DIR__ . '/../var/log'))->dispatch();

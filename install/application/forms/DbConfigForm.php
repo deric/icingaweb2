@@ -29,7 +29,6 @@
 namespace Icinga\Installer\Pages;
 
 use \Zend_Config;
-use \Icinga\Installer\Validators\PasswordValidator;
 
 /**
  * Wizard-Page that prompts the user for database configuration details
@@ -40,6 +39,15 @@ class DbConfigForm extends WizardForm
     {
         $this->addNote('Database configuration', 1);
 
+        $this->addNote(
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut' .
+            ' labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores' .
+            ' et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem' .
+            ' ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et' .
+            ' dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.' .
+            ' Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
+        );
+
         $this->addNote('Primary database store to use', 2);
 
         $this->addElement(
@@ -47,10 +55,10 @@ class DbConfigForm extends WizardForm
             'db_resource',
             array(
                 'label'         => 'Resource name',
-                'helptext'      => 'This is the name internally used by Icinga 2 Web to identify this database store.',
+                'helptext'      => 'This is the name internally used by icingaweb to identify this database store.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'value'         => 'icinga2web'
+                'value'         => 'icingaweb'
             )
         );
         $this->addElement(
@@ -93,7 +101,7 @@ class DbConfigForm extends WizardForm
                 'helptext'      => 'The name of this database.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'value'         => 'icinga2web'
+                'value'         => 'icingaweb'
             )
         );
         $this->addElement(
@@ -104,7 +112,7 @@ class DbConfigForm extends WizardForm
                 'helptext'      => 'The username to use for authentication with this database.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'value'         => 'icinga2web'
+                'value'         => 'icingaweb'
             )
         );
         $this->addElement(
@@ -117,20 +125,6 @@ class DbConfigForm extends WizardForm
                 'allowEmpty'    => false
             )
         );
-        $this->addElement(
-            'password',
-            'db_password2',
-            array(
-                'label'         => 'Password confirmation',
-                'helptext'      => 'Please enter the password a second time to avoid mistakes.',
-                'required'      => true,
-                'allowEmpty'    => false
-            )
-        );
-
-        $passwordValidator = new PasswordValidator();
-        $passwordValidator->setCounterpart('db_password2');
-        $this->getElement('db_password')->addValidator($passwordValidator);
 
         $this->setSubmitLabel('Continue');
     }
@@ -162,7 +156,7 @@ class DbConfigForm extends WizardForm
             $isValid = $message === 'OK';
 
             if (!$isValid) {
-                $this->addErrorNote('Database connection could not be established: ' . $message, 2);
+                $this->addErrorNote('Database connection could not be established: ' . $message, 3);
             }
         }
 

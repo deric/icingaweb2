@@ -39,6 +39,15 @@ class BackendConfigForm extends WizardForm
     {
         $this->addNote('Backend configuration', 1);
 
+        $this->addNote(
+            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut' .
+            ' labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores' .
+            ' et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem' .
+            ' ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et' .
+            ' dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.' .
+            ' Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
+        );
+
         $this->addNote('IDO - Icinga Data Out', 2);
 
         $this->addElement(
@@ -46,10 +55,10 @@ class BackendConfigForm extends WizardForm
             'backend_name',
             array(
                 'label'         => 'Backend name',
-                'helptext'      => 'This is the name internally used by Icinga 2 Web to identify this backend.',
+                'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
                 'required'      => true,
                 'allowEmpty'    => false,
-                'value'         => 'icinga2ido'
+                'value'         => 'icingaido'
             )
         );
         $this->addElement(
@@ -77,8 +86,7 @@ class BackendConfigForm extends WizardForm
                 'backend_resource',
                 array(
                     'label'         => 'Resource name',
-                    'helptext'      => 'This is the name internally used by Icinga 2 Web'
-                                     . ' to identify this database store.',
+                    'helptext'      => 'This is the name internally used by icingaweb to identify this database store.',
                     'required'      => true,
                     'allowEmpty'    => false
                 )
@@ -165,10 +173,10 @@ class BackendConfigForm extends WizardForm
                 'backend_statusdat_name',
                 array(
                     'label'         => 'Backend name',
-                    'helptext'      => 'This is the name internally used by Icinga 2 Web to identify this backend.',
+                    'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
                     'required'      => true,
                     'allowEmpty'    => false,
-                    'value'         => 'icinga2dat'
+                    'value'         => 'icingadat'
                 )
             );
             $this->addElement(
@@ -212,10 +220,10 @@ class BackendConfigForm extends WizardForm
                 'backend_livestatus_name',
                 array(
                     'label'         => 'Backend name',
-                    'helptext'      => 'This is the name internally used by Icinga 2 Web to identify this backend.',
+                    'helptext'      => 'This is the name internally used by icingaweb to identify this backend.',
                     'required'      => true,
                     'allowEmpty'    => false,
-                    'value'         => 'icinga2live'
+                    'value'         => 'icingalive'
                 )
             );
             $this->addElement(
