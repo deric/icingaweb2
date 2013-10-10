@@ -80,6 +80,13 @@ class Report
     private $correctPhpVersion;
 
     /**
+     * Whether the PHP short open tag is enabled
+     *
+     * @var bool
+     */
+    private $shortOpenTagEnabled;
+
+    /**
      * Whether the apache configuration is valid
      *
      * @var bool
@@ -108,8 +115,9 @@ class Report
             $this->hasPgsqlAdapter = $args[3];
             $this->hasLdapExtension = $args[4];
             $this->correctPhpVersion = $args[5];
-            $this->validApacheConfig = $args[6];
-            $this->pathAccess = $args[7];
+            $this->shortOpenTagEnabled = $args[6];
+            $this->validApacheConfig = $args[7];
+            $this->pathAccess = $args[8];
         } else {
             $this->init();
         }
@@ -133,6 +141,7 @@ class Report
                 $data['hasPgsqlAdapter'],
                 $data['hasLdapExtension'],
                 $data['correctPhpVersion'],
+                $data['shortOpenTagEnabled'],
                 $data['validApacheConfig'],
                 $data['pathAccess']
             )
@@ -157,14 +166,15 @@ class Report
     public function toArray()
     {
         return array(
-            'hasMysqlExtension' => $this->hasMysqlExtension,
-            'hasPgsqlExtension' => $this->hasPgsqlExtension,
-            'hasMysqlAdapter'   => $this->hasMysqlAdapter,
-            'hasPgsqlAdapter'   => $this->hasPgsqlAdapter,
-            'hasLdapExtension'  => $this->hasLdapExtension,
-            'correctPhpVersion' => $this->correctPhpVersion,
-            'validApacheConfig' => $this->validApacheConfig,
-            'pathAccess'        => $this->pathAccess
+            'hasMysqlExtension'     => $this->hasMysqlExtension,
+            'hasPgsqlExtension'     => $this->hasPgsqlExtension,
+            'hasMysqlAdapter'       => $this->hasMysqlAdapter,
+            'hasPgsqlAdapter'       => $this->hasPgsqlAdapter,
+            'hasLdapExtension'      => $this->hasLdapExtension,
+            'correctPhpVersion'     => $this->correctPhpVersion,
+            'shortOpenTagEnabled'   => $this->shortOpenTagEnabled,
+            'validApacheConfig'     => $this->validApacheConfig,
+            'pathAccess'            => $this->pathAccess
         );
     }
 
@@ -179,21 +189,14 @@ class Report
         $this->hasPgsqlAdapter = @include_once('Zend/Db/Adapter/Pdo/Pgsql.php');
         $this->hasLdapExtension = extension_loaded('ldap');
         $this->correctPhpVersion = preg_match('#5\.(3|4).*#', phpversion());
+        $this->shortOpenTagEnabled = ini_get('short_open_tag') || preg_match('#5\.4.*#', phpversion());
 
         $status = $this->getStatusCode('configCheck/');
         $this->validApacheConfig = $status === null ? null : $status === 403;
 
         $configDir = Wizard::getInstance()->getConfigurationDir();
-        $authenticationPath = $configDir . '/authentication.ini';
-        $resourcePath = $configDir . '/resources.ini';
-        $monitoringDir = $configDir . '/modules/monitoring';
-        $backendsPath = $monitoringDir . '/backends.ini';
         $this->pathAccess = array(
-            'config'                => is_writable($configDir),
-            'resources.ini'         => !file_exists($resourcePath) || is_writable($resourcePath),
-            'authentication.ini'    => !file_exists($authenticationPath) || is_writable($authenticationPath),
-            'config/monitoring'     => is_writable($monitoringDir),
-            'backends.ini'          => !file_exists($backendsPath) || is_writable($backendsPath)
+            'config' => is_readable($configDir) && is_writable($configDir)
         );
     }
 
@@ -227,7 +230,7 @@ class Report
             $content,
             array(
                 'state' => $this->hasMysqlExtension ? 1 : 0,
-                'note'  => $this->hasMysqlExtension ? 'OK' : 'FAIL',
+                'note'  => $this->hasMysqlExtension ? 'OK' : 'WARNING',
                 'desc'  => 'The MySQL php-extension is required to provide MySQL support'
             )
         );
@@ -235,23 +238,27 @@ class Report
             $content,
             array(
                 'state' => $this->hasPgsqlExtension ? 1 : 0,
-                'note'  => $this->hasPgsqlExtension ? 'OK' : 'FAIL',
+                'note'  => $this->hasPgsqlExtension ? 'OK' : 'WARNING',
                 'desc'  => 'The PostgreSQL php-extension is required to provide PostgreSQL support'
             )
         );
-        array_push(
-            $content,
-            array(
-                'state' => $this->hasMysqlExtension || $this->hasPgsqlExtension ? 1 : -1,
-                'note'  => $this->hasMysqlExtension || $this->hasPgsqlExtension ? 'OK' : 'FAIL',
-                'desc'  => 'At least one database extension is required to install Icinga 2 Web'
-            )
-        );
+
+        if (!$this->hasMysqlExtension && !$this->hasPgsqlExtension) {
+            array_push(
+                $content,
+                array(
+                    'state' => -1,
+                    'note'  => 'FAIL',
+                    'desc'  => 'At least one database extension is required to install Icinga 2 Web'
+                )
+            );
+        }
+
         array_push(
             $content,
             array(
                 'state' => $this->hasMysqlAdapter ? 1 : 0,
-                'note'  => $this->hasMysqlAdapter ? 'OK' : 'FAIL',
+                'note'  => $this->hasMysqlAdapter ? 'OK' : 'WARNING',
                 'desc'  => 'The Zend db adapter for MySQL is required to provide support for MySQL'
             )
         );
@@ -259,23 +266,51 @@ class Report
             $content,
             array(
                 'state' => $this->hasPgsqlAdapter ? 1 : 0,
-                'note'  => $this->hasPgsqlAdapter ? 'OK' : 'FAIL',
+                'note'  => $this->hasPgsqlAdapter ? 'OK' : 'WARNING',
                 'desc'  => 'The Zend db adapter for PostgreSQL is required to provide support for PostgreSQL'
             )
         );
-        array_push(
-            $content,
-            array(
-                'state' => $this->hasMysqlAdapter || $this->hasPgsqlAdapter ? 1 : -1,
-                'note'  => $this->hasMysqlAdapter || $this->hasPgsqlAdapter ? 'OK' : 'FAIL',
-                'desc'  => 'At least one database adapter is required to install Icinga 2 Web'
-            )
-        );
+
+        if (!$this->hasMysqlAdapter && !$this->hasPgsqlAdapter) {
+            array_push(
+                $content,
+                array(
+                    'state' => -1,
+                    'note'  => 'FAIL',
+                    'desc'  => 'At least one database adapter is required to install Icinga 2 Web'
+                )
+            );
+        }
+
+        if ($this->hasMysqlAdapter && !$this->hasMysqlExtension &&
+            !($this->hasPgsqlAdapter && $this->hasPgsqlExtension)) {
+            array_push(
+                $content,
+                array(
+                    'state' => -1,
+                    'note'  => 'FAIL',
+                    'desc'  => 'The MySQL php-extension is required to use the respective Zend db adapter'
+                )
+            );
+        }
+
+        if ($this->hasPgsqlAdapter && !$this->hasPgsqlExtension &&
+            !($this->hasMysqlAdapter && $this->hasMysqlExtension)) {
+            array_push(
+                $content,
+                array(
+                    'state' => -1,
+                    'note'  => 'FAIL',
+                    'desc'  => 'The PostgreSQL php-extension is required to use the respective Zend db adapter'
+                )
+            );
+        }
+
         array_push(
             $content,
             array(
                 'state' => $this->hasLdapExtension ? 1 : 0,
-                'note'  => $this->hasLdapExtension ? 'OK' : 'FAIL',
+                'note'  => $this->hasLdapExtension ? 'OK' : 'WARNING',
                 'desc'  => 'The LDAP php-extension is required to provide AD authentication'
             )
         );
@@ -285,6 +320,14 @@ class Report
                 'state' => $this->correctPhpVersion ? 1 : -1,
                 'note'  => $this->correctPhpVersion ? 'OK' : 'FAIL',
                 'desc'  => 'Icinga 2 Web requires PHP version 5.3.x or 5.4.x'
+            )
+        );
+        array_push(
+            $content,
+            array(
+                'state' => $this->shortOpenTagEnabled ? 1 : 0,
+                'note'  => $this->shortOpenTagEnabled ? 'OK' : 'WARNING',
+                'desc'  => 'Icinga 2 Web makes use of the PHP short open tag &lt;?='
             )
         );
 
@@ -317,39 +360,7 @@ class Report
             array(
                 'state' => $this->pathAccess['config'] ? 1 : -1,
                 'note'  => $this->pathAccess['config'] ? 'OK' : 'FAIL',
-                'desc'  => 'The directory config/ needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $content,
-            array(
-                'state'  => $this->pathAccess['resources.ini'] ? 1 : -1,
-                'note'   => $this->pathAccess['resources.ini'] ? 'OK' : 'FAIL',
-                'desc'   => 'The file config/resources.ini needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $content,
-            array(
-                'state'  => $this->pathAccess['authentication.ini'] ? 1 : -1,
-                'note'   => $this->pathAccess['authentication.ini'] ? 'OK' : 'FAIL',
-                'desc'   => 'The file config/authentication.ini needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $content,
-            array(
-                'state'  => $this->pathAccess['config/monitoring'] ? 1 : -1,
-                'note'   => $this->pathAccess['config/monitoring'] ? 'OK' : 'FAIL',
-                'desc'   => 'The directory config/modules/monitoring needs to be accessible by the PHP user'
-            )
-        );
-        array_push(
-            $content,
-            array(
-                'state'  => $this->pathAccess['backends.ini'] ? 1 : -1,
-                'note'   => $this->pathAccess['backends.ini'] ? 'OK' : 'FAIL',
-                'desc'   => 'The file config/modules/monitoring/backends.ini needs to be accessible by the PHP user'
+                'desc'  => 'The configuration directory needs to be read-/writable by the PHP user'
             )
         );
 
@@ -365,6 +376,10 @@ class Report
     {
         if (!($this->hasMysqlExtension || $this->hasPgsqlExtension) ||
             !($this->hasMysqlAdapter || $this->hasPgsqlAdapter) ||
+            ($this->hasMysqlAdapter && !$this->hasMysqlExtension &&
+             !($this->hasPgsqlAdapter && $this->hasPgsqlExtension)) ||
+            ($this->hasPgsqlAdapter && !$this->hasPgsqlExtension &&
+             !($this->hasMysqlAdapter && $this->hasMysqlExtension)) ||
             !$this->correctPhpVersion || $this->validApacheConfig === false) {
             return false;
         }
