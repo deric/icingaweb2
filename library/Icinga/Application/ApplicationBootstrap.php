@@ -142,7 +142,6 @@ abstract class ApplicationBootstrap
 
         Benchmark::measure('Bootstrap, autoloader registered');
 
-        Icinga::setApp($this);
         $this->configDir = realpath($configDir);
     }
 
@@ -264,6 +263,7 @@ abstract class ApplicationBootstrap
             $application->stopApplication(Logger::getQueue());
         }
 
+        Icinga::setApp($application);
         return $application;
     }
 
@@ -300,7 +300,7 @@ abstract class ApplicationBootstrap
      */
     public function setupAutoloader()
     {
-        require $this->libDir. '/Icinga/Application/Loader.php';
+        require_once $this->libDir. '/Icinga/Application/Loader.php';
 
         $this->loader = new Loader();
         $this->loader->registerNamespace('Icinga', $this->libDir. '/Icinga');

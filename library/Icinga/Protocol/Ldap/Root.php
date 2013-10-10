@@ -28,6 +28,8 @@
 
 namespace Icinga\Protocol\Ldap;
 
+use \Exception;
+
 /**
  * This class is a special node object, representing your connections root node
  *

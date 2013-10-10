@@ -31,12 +31,12 @@ namespace Tests\Icinga\Protocol\Commandpipe;
 require_once(realpath(__DIR__ . '/CommandPipeLoader.php'));
 CommandPipeLoader::requireLibrary();
 
+use \Exception;
 use Zend_Config;
 use PHPUnit_Framework_TestCase;
 use Icinga\Protocol\Commandpipe\Comment;
 use Icinga\Protocol\Commandpipe\Commandpipe as Commandpipe;
 use Icinga\Protocol\Commandpipe\PropertyModifier as MONFLAG;
-use Icinga\Protocol\Ldap\Exception;
 use Icinga\Module\Monitoring\Command\AcknowledgeCommand;
 use Icinga\Module\Monitoring\Command\AddCommentCommand;
 use Icinga\Module\Monitoring\Command\ScheduleDowntimeCommand;

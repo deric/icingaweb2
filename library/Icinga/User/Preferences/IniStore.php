@@ -29,7 +29,7 @@
 namespace Icinga\User\Preferences;
 
 use Icinga\Application\Logger;
-use Icinga\Protocol\Ldap\Exception;
+use \Exception;
 use \SplObserver;
 use \SplSubject;
 use \Icinga\User;
@@ -98,7 +98,7 @@ class IniStore implements LoadInterface, FlushObserverInterface
      * Setter for config directory
      *
      * @param  string $configPath
-     * @throws \Icinga\Exception\ConfigurationError
+     * @throws ConfigurationError
      */
     public function setConfigPath($configPath)
     {

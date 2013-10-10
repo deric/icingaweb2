@@ -43,7 +43,6 @@ require_once 'Zend/Log.php';
 require_once BaseTestCase::$libDir . '/Exception/ProgrammingError.php';
 require_once BaseTestCase::$libDir . '/Util/ConfigAwareFactory.php';
 require_once BaseTestCase::$libDir . '/Authentication/UserBackend.php';
-require_once BaseTestCase::$libDir . '/Protocol/Ldap/Exception.php';
 require_once BaseTestCase::$libDir . '/Application/DbAdapterFactory.php';
 require_once BaseTestCase::$libDir . '/Application/Config.php';
 require_once BaseTestCase::$libDir . '/Authentication/Credential.php';

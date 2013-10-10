@@ -28,11 +28,9 @@
 
 namespace Icinga\Application;
 
-use Icinga\Protocol\Ldap\Exception;
 use \Zend_Config;
 use \Zend_Log;
 use \Zend_Log_Filter_Priority;
-use \Zend_Log_Writer_Abstract;
 use \Zend_Log_Exception;
 use \Icinga\Exception\ConfigurationError;
 

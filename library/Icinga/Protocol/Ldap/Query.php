@@ -2,6 +2,8 @@
 
 namespace Icinga\Protocol\Ldap;
 
+use \Exception;
+
 /**
  * Search class
  *
