@@ -144,14 +144,6 @@ class WizardForm extends Form
     }
 
     /**
-     * Mark the current page to restart the wizard on submit
-     */
-    public function restartWizard()
-    {
-        $this->setProgress(1);
-    }
-
-    /**
      * Set the progress of the wizard
      *
      * @param   int     $step   The current wizard step

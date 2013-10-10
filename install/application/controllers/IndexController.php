@@ -116,7 +116,7 @@ class IndexController extends Zend_Controller_Action
         if ($report->isOk()) {
             $this->view->form->advanceToNextPage();
         } else {
-            $this->view->form->restartWizard();
+            $this->view->form->stayOnPage();
         }
         $session->report = $report->toJSON();
     }

@@ -50,7 +50,7 @@ class RequirementsForm extends WizardForm
                 '<span style="font-weight:bold;">Some mandatory requirements are not fulfilled!</span>'
               . ' Please check your environment and install the appropriate software and packages.'
             );
-            $this->setSubmitLabel('Restart');
+            $this->setSubmitLabel('Re-check');
         }
     }
 }
