@@ -29,7 +29,6 @@
 require_once 'Zend/Session.php';
 require_once 'Zend/Session/Namespace.php';
 require_once 'Zend/Controller/Action.php';
-require_once realpath(__DIR__ . '/../Report.php');
 require_once realpath(__DIR__ . '/../forms/WizardForm.php');
 require_once realpath(__DIR__ . '/../forms/StartForm.php');
 require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
@@ -37,11 +36,12 @@ require_once realpath(__DIR__ . '/../forms/AuthConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
 require_once realpath(__DIR__ . '/../forms/ConfirmationForm.php');
 require_once realpath(__DIR__ . '/../forms/BackendConfigForm.php');
+require_once realpath(__DIR__ . '/../../library/Icinga/Util/Report.php');
 
 use \Zend_Session;
 use \Zend_Session_Namespace;
 use \Zend_Controller_Action;
-use \Icinga\Installer\Report;
+use \Icinga\Util\Report;
 use \Icinga\Installer\Pages\StartForm;
 use \Icinga\Installer\Pages\DbConfigForm;
 use \Icinga\Installer\Pages\AuthConfigForm;

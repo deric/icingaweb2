@@ -26,7 +26,7 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-require_once realpath(__DIR__ . '/install/functions.php');
+require_once realpath(__DIR__ . '/../library/Icinga/Application/functions.php');
 
 if (!is_zend_installed('1')) {
     echo '<h3>Zend Framework not found!</h3>'
@@ -44,11 +44,11 @@ if (!is_zend_installed('1')) {
 date_default_timezone_set('UTC');
 
 require_once realpath(__DIR__ . '/../library/Icinga/Application/ApplicationBootstrap.php');
+require_once realpath(__DIR__ . '/../library/Icinga/Application/Wizard.php');
 require_once realpath(__DIR__ . '/../library/Icinga/Application/Web.php');
-require_once realpath(__DIR__ . '/install/application/Wizard.php');
 
 use \Icinga\Application\Web;
-use \Icinga\Installer\Wizard;
+use \Icinga\Application\Wizard;
 
 $configDir = realpath(__DIR__ . '/../config/');
 if (Web::isInstalled($configDir)) {

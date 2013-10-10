@@ -144,8 +144,6 @@ abstract class ApplicationBootstrap
 
         Icinga::setApp($this);
         $this->configDir = realpath($configDir);
-
-        require_once dirname(__FILE__) . '/functions.php';
     }
 
     /**

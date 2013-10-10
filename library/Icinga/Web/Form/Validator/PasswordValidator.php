@@ -26,9 +26,7 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-namespace Icinga\Installer\Validators;
-
-require_once 'Zend/Validate/Abstract.php';
+namespace Icinga\Web\Form\Validator;
 
 use \Zend_Validate_Abstract;
 

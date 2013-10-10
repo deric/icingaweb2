@@ -26,11 +26,11 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-namespace Icinga\Installer;
+namespace Icinga\Util;
 
 use \ReflectionClass;
 use \Zend_Controller_Front;
-use \Icinga\Installer\Wizard;
+use \Icinga\Application\Wizard;
 
 /**
  * A class that collects and presents system information

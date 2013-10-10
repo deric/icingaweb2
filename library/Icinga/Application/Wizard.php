@@ -26,7 +26,7 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-namespace Icinga\Installer;
+namespace Icinga\Application;
 
 require_once 'Zend/View.php';
 require_once 'Zend/Layout.php';
@@ -103,7 +103,7 @@ class Wizard
     public function getApplicationDir()
     {
         if (!isset($this->appDir)) {
-            $this->appDir = realpath(__DIR__);
+            $this->appDir = realpath(__DIR__ . '/../../../installer');
         }
         return $this->appDir;
     }

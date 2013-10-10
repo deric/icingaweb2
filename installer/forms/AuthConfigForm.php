@@ -29,7 +29,7 @@
 namespace Icinga\Installer\Pages;
 
 use \Zend_Config;
-use \Icinga\Installer\Validators\PasswordValidator;
+use \Icinga\Web\Form\Validator\PasswordValidator;
 
 /**
  * Wizard-page that prompts the user to configure the authentication
