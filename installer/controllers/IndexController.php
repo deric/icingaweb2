@@ -44,6 +44,7 @@ require_once realpath(__DIR__ . '/../../library/Icinga/Util/Report.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Config/IniEditor.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Config/PreservingIniWriter.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Application/Installer.php');
+require_once realpath(__DIR__ . '/../../library/Icinga/Application/Config.php');
 
 use \Zend_Config;
 use \Zend_Session;

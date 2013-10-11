@@ -107,8 +107,9 @@ class Installer
             $this->setupResources();
             $this->setupAuthentication();
             $this->setupPreferences();
-            $this->setupDefaultAdmin();
             $this->setupBackend();
+            $this->setupDatabase();
+            $this->setupDefaultAdmin();
         } catch (Exception $error) {
             // TODO: Log this exception? (To the logfile, not $this->log()!)
             $this->failed = true;
@@ -182,8 +183,8 @@ class Installer
 
         $iniWriter = new PreservingIniWriter(
             array(
-                'filename'  => $configPath,
-                'config'    => new Zend_Config($iniContent)
+                'config'    => new Zend_Config($iniContent),
+                'filename'  => $configPath
             )
         );
 
@@ -238,8 +239,8 @@ class Installer
 
         $iniWriter = new PreservingIniWriter(
             array(
-                'filename'  => $configPath,
-                'config'    => new Zend_Config($iniContent)
+                'config'    => new Zend_Config($iniContent),
+                'filename'  => $configPath
             )
         );
 
@@ -258,6 +259,55 @@ class Installer
      */
     private function setupPreferences()
     {
+        $configPath = $this->configDir . '/config.ini';
+
+        try {
+            $config = new Config($configPath);
+        } catch (Exception $error) {
+            $this->log('Preference configuration', 'Error while reading INI file: ' . $error->getMessage());
+            throw $error;
+        }
+
+        $preferenceType = $this->options->authConfig->auth_preference_store;
+        if ($preferenceType === 'type_ini') {
+            $config->preferences->type = 'ini';
+        } elseif ($preferenceType === 'type_db') {
+            $config->preferences->type = 'db';
+            $config->preferences->resource = $this->options->dbConfig->db_resource;
+        } elseif (isset($config->preferences)) { // $preferenceType === 'type_none'
+            $config->preferences->type = 'null';
+        }
+
+        $iniWriter = new PreservingIniWriter(
+            array(
+                'filename'  => $configPath,
+                'config'    => $config
+            )
+        );
+
+        try {
+            $iniWriter->write();
+        } catch (Exception $error) {
+            $this->log('Preference configuration', 'Error while writing INI file: ' . $error->getMessage());
+            throw $error;
+        }
+
+        $this->log('Preference configuration', 'Configuration successfully written to: ' . $configPath);
+    }
+
+    /**
+     * Set up the initial backend
+     */
+    private function setupBackend()
+    {
+        
+    }
+
+    /**
+     * Set up the database structure
+     */
+    private function setupDatabase()
+    {
         
     }
 
@@ -265,14 +315,6 @@ class Installer
      * Set up the default admin user
      */
     private function setupDefaultAdmin()
-    {
-        
-    }
-
-    /**
-     * Set up the initial backend
-     */
-    private function setupBackend()
     {
         
     }
