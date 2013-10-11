@@ -28,8 +28,10 @@
 
 require_once 'Zend/Config.php';
 require_once 'Zend/Session.php';
+require_once 'Zend/Config/Ini.php';
 require_once 'Zend/Session/Namespace.php';
 require_once 'Zend/Controller/Action.php';
+require_once 'Zend/Config/Writer/FileAbstract.php';
 require_once realpath(__DIR__ . '/../forms/WizardForm.php');
 require_once realpath(__DIR__ . '/../forms/EndForm.php');
 require_once realpath(__DIR__ . '/../forms/StartForm.php');
@@ -39,6 +41,8 @@ require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
 require_once realpath(__DIR__ . '/../forms/ConfirmationForm.php');
 require_once realpath(__DIR__ . '/../forms/BackendConfigForm.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Util/Report.php');
+require_once realpath(__DIR__ . '/../../library/Icinga/Config/IniEditor.php');
+require_once realpath(__DIR__ . '/../../library/Icinga/Config/PreservingIniWriter.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Application/Installer.php');
 
 use \Zend_Config;

@@ -30,6 +30,7 @@ namespace Icinga\Application;
 
 use \Exception;
 use \Zend_Config;
+use \Icinga\Config\PreservingIniWriter;
 
 class Installer
 {
@@ -137,7 +138,66 @@ class Installer
      */
     private function setupResources()
     {
-        
+        $configPath = $this->configDir . '/resources.ini';
+        $templatePath = $this->configDir . '/resources.ini.in';
+        if (!@copy($templatePath, $configPath)) {
+            $message = 'Could not duplicate INI template: ' . $templatePath;
+            $this->log('Resource configuration', $message);
+            throw new Exception($message);
+        }
+        chmod($configPath, 0664);
+        $this->log('Resource configuration', 'Successfully duplicated INI template: ' . $templatePath);
+
+        $dbConfig = $this->options->dbConfig;
+        $iniContent = array(
+            $dbConfig->db_resource => array(
+                'type'      => 'db',
+                'db'        => $dbConfig->db_provider,
+                'host'      => $dbConfig->db_host,
+                'dbname'    => $dbConfig->db_name,
+                'username'  => $dbConfig->db_username,
+                'password'  => $dbConfig->db_password
+            )
+        );
+        if (!empty($dbConfig->db_port)) {
+            $iniContent[$dbConfig->db_resource]['port'] = $dbConfig->db_port;
+        }
+        $this->log('Resource configuration', 'Added primary database store: ' . $dbConfig->db_resource);
+
+        $backendConfig = $this->options->backendConfig;
+        if ($backendConfig->backend_ido_host !== null) {
+            $iniContent[$backendConfig->backend_name] = array(
+                'type'      => 'db',
+                'db'        => $backendConfig->backend_ido_provider,
+                'host'      => $backendConfig->backend_ido_host,
+                'dbname'    => $backendConfig->backend_ido_dbname,
+                'username'  => $backendConfig->backend_ido_dbuser,
+                'password'  => $backendConfig->backend_ido_dbpass
+            );
+            if (!empty($backendConfig->backend_ido_port)) {
+                $iniContent[$backendConfig->backend_name]['port'] = $backendConfig->backend_ido_port;
+            }
+            $this->log('Resource configuration', 'Added IDO database store: ' . $backendConfig->backend_name);
+        }
+
+        $iniWriter = new PreservingIniWriter(
+            array(
+                'filename'  => $configPath,
+                'config'    => new Zend_Config($iniContent)
+            )
+        );
+
+        try {
+            $iniWriter->write();
+        } catch (Exception $error) {
+            $this->log('Resource configuration', 'Error while writing INI file: ' . $error->getMessage());
+            throw $error;
+        }
+
+        $this->log(
+            'Resource configuration',
+            'Configuration successfully written to: ' . $configPath
+        );
     }
 
     /**
