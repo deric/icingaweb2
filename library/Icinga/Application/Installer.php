@@ -140,7 +140,7 @@ class Installer
     {
         $configPath = $this->configDir . '/resources.ini';
         $templatePath = $this->configDir . '/resources.ini.in';
-        if (!@copy($templatePath, $configPath)) {
+        if (!$this->cleanAutoconfIni($templatePath)) {
             $message = 'Could not duplicate INI template: ' . $templatePath;
             $this->log('Resource configuration', $message);
             throw new Exception($message);
@@ -194,10 +194,7 @@ class Installer
             throw $error;
         }
 
-        $this->log(
-            'Resource configuration',
-            'Configuration successfully written to: ' . $configPath
-        );
+        $this->log('Resource configuration', 'Configuration successfully written to: ' . $configPath);
     }
 
     /**
@@ -205,7 +202,55 @@ class Installer
      */
     private function setupAuthentication()
     {
-        
+        $configPath = $this->configDir . '/authentication.ini';
+        $templatePath = $this->configDir . '/authentication.ini.in';
+        if (!$this->cleanAutoconfIni($templatePath)) {
+            $message = 'Could not duplicate INI template: ' . $templatePath;
+            $this->log('Authentication configuration', $message);
+            throw new Exception($message);
+        }
+        chmod($configPath, 0664);
+        $this->log('Authentication configuration', 'Successfully duplicated INI template: ' . $templatePath);
+
+        $iniContent = array();
+        $authConfig = $this->options->authConfig;
+
+        if ($authConfig->auth_use_ldap) {
+            $iniContent['ldap_authentication'] = array(
+                'hostname'              => $authConfig->auth_ldap_hostname,
+                'root_dn'               => $authConfig->auth_ldap_root_dn,
+                'bind_dn'               => $authConfig->auth_ldap_bind_dn,
+                'bind_pw'               => $authConfig->auth_ldap_bind_pw,
+                'user_class'            => $authConfig->auth_ldap_user_class,
+                'user_name_attribute'   => $authConfig->auth_ldap_user_name_attributes,
+                'target'                => 'user',
+                'backend'               => 'ldap'
+            );
+            $this->log('Authentication configuration', 'Added LDAP authentication backend: ldap_authentication');
+        }
+
+        $iniContent['internal_authentication'] = array(
+            'resource'  => $this->options->dbConfig->db_resource,
+            'target'    => 'user',
+            'backend'   => 'db'
+        );
+        $this->log('Authentication configuration', 'Added db authentication backend: internal_authentication');
+
+        $iniWriter = new PreservingIniWriter(
+            array(
+                'filename'  => $configPath,
+                'config'    => new Zend_Config($iniContent)
+            )
+        );
+
+        try {
+            $iniWriter->write();
+        } catch (Exception $error) {
+            $this->log('Authentication configuration', 'Error while writing INI file: ' . $error->getMessage());
+            throw $error;
+        }
+
+        $this->log('Authentication configuration', 'Configuration successfully written to: ' . $configPath);
     }
 
     /**
@@ -238,5 +283,23 @@ class Installer
     private function finalize()
     {
         
+    }
+
+    /**
+     * Copy the given INI template to its destination file and strip all autoconf template strings
+     *
+     * @param   string  $path   The path to the template
+     * @return  bool            Whether the operation succeeded
+     */
+    private function cleanAutoconfIni($path)
+    {
+        $content = @file_get_contents($path);
+        if ($content) {
+            if (@file_put_contents(substr($path, 0, -3), preg_replace('#@[a-z_]+@#', '', $content))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
