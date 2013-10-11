@@ -26,10 +26,12 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
+require_once 'Zend/Config.php';
 require_once 'Zend/Session.php';
 require_once 'Zend/Session/Namespace.php';
 require_once 'Zend/Controller/Action.php';
 require_once realpath(__DIR__ . '/../forms/WizardForm.php');
+require_once realpath(__DIR__ . '/../forms/EndForm.php');
 require_once realpath(__DIR__ . '/../forms/StartForm.php');
 require_once realpath(__DIR__ . '/../forms/DbConfigForm.php');
 require_once realpath(__DIR__ . '/../forms/AuthConfigForm.php');
@@ -37,11 +39,16 @@ require_once realpath(__DIR__ . '/../forms/RequirementsForm.php');
 require_once realpath(__DIR__ . '/../forms/ConfirmationForm.php');
 require_once realpath(__DIR__ . '/../forms/BackendConfigForm.php');
 require_once realpath(__DIR__ . '/../../library/Icinga/Util/Report.php');
+require_once realpath(__DIR__ . '/../../library/Icinga/Application/Installer.php');
 
+use \Zend_Config;
 use \Zend_Session;
 use \Zend_Session_Namespace;
 use \Zend_Controller_Action;
 use \Icinga\Util\Report;
+use \Icinga\Application\Wizard;
+use \Icinga\Application\Installer;
+use \Icinga\Installer\Pages\EndForm;
 use \Icinga\Installer\Pages\StartForm;
 use \Icinga\Installer\Pages\DbConfigForm;
 use \Icinga\Installer\Pages\AuthConfigForm;
@@ -88,8 +95,8 @@ class IndexController extends Zend_Controller_Action
                 }
                 break;
             case 7:
-                if ($this->validateConfirmation($namespace)) {
-                    $this->runInstallation();
+                if ($this->validateConfirmation($namespace) && $this->runInstallation($namespace)) {
+                    Zend_Session::namespaceUnset('installation');
                 }
         }
     }
@@ -249,9 +256,33 @@ class IndexController extends Zend_Controller_Action
 
     /**
      * Process the entire details and run the installation
+     *
+     * @return  bool    Whether the installation succeeded
      */
-    private function runInstallation()
+    private function runInstallation($session)
     {
-        throw new \Exception('Not implemented');
+        $installer = new Installer(
+            Wizard::getInstance()->getConfigurationDir(),
+            new Zend_Config(
+                array(
+                    'backendConfig' => $session->backendDetails,
+                    'dbConfig'      => $session->databaseDetails,
+                    'authConfig'    => $session->authenticationDetails
+                )
+            )
+        );
+        $installer->run();
+
+        $this->view->form = new EndForm();
+        $this->view->form->setRequest($this->getRequest());
+        $this->view->form->setResult($installer->getResult());
+
+        if ($installer->hasFailed()) {
+            $this->view->form->retryInstallation();
+            return false;
+        } else {
+            $this->view->form->finishInstallation();
+            return true;
+        }
     }
 }

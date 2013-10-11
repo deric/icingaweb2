@@ -30,7 +30,6 @@ namespace Icinga\Installer\Pages;
 
 require_once 'Zend/Db.php';
 require_once 'Zend/Form.php';
-require_once 'Zend/Config.php';
 require_once 'Zend/Validate/Abstract.php';
 require_once 'Zend/Form/Element/Xhtml.php';
 require_once 'Zend/Form/Element/Submit.php';
@@ -142,6 +141,14 @@ class WizardForm extends Form
     public function stayOnPage()
     {
         $this->setProgress($this->getRequest()->getPost('progress', 1));
+    }
+
+    /**
+     * Mark the current page to not to advance and return to the first one
+     */
+    public function endWizard()
+    {
+        $this->setProgress(1);
     }
 
     /**
