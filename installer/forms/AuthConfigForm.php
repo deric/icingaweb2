@@ -123,6 +123,16 @@ class AuthConfigForm extends WizardForm
                 );
                 $this->addElement(
                     'text',
+                    'auth_ldap_port',
+                    array(
+                        'label'         => 'Port',
+                        'helptext'      => 'Leave blank to use the default.',
+                        'allowEmpty'    => true,
+                        'validators'    => array('int')
+                    )
+                );
+                $this->addElement(
+                    'text',
                     'auth_ldap_root_dn',
                     array(
                         'label'         => 'root_dn',
@@ -159,11 +169,18 @@ class AuthConfigForm extends WizardForm
                 );
                 $this->addElement(
                     'text',
-                    'auth_ldap_user_name_attributes',
+                    'auth_ldap_user_name_attribute',
                     array(
-                        'label'         => 'user_name_attributes',
-                        'required'      => true,
-                        'allowEmpty'    => false
+                        'label'         => 'user_name_attribute',
+                        'allowEmpty'    => true
+                    )
+                );
+                $this->addElement(
+                    'text',
+                    'auth_ldap_user_password_attribute',
+                    array(
+                        'label'         => 'user_password_attribute',
+                        'allowEmpty'    => true
                     )
                 );
             }
@@ -190,12 +207,14 @@ class AuthConfigForm extends WizardForm
             $message = $this->checkLdapAuthentication(
                 new Zend_Config(
                     array(
-                        'hostname'              => $data['auth_ldap_hostname'],
-                        'root_dn'               => $data['auth_ldap_root_dn'],
-                        'bind_dn'               => $data['auth_ldap_bind_dn'],
-                        'bind_pw'               => $data['auth_ldap_bind_pw'],
-                        'user_class'            => $data['auth_ldap_user_class'],
-                        'user_name_attribute'   => $data['auth_ldap_user_name_attributes']
+                        'hostname'                  => $data['auth_ldap_hostname'],
+                        'port'                      => $data['auth_ldap_port'],
+                        'root_dn'                   => $data['auth_ldap_root_dn'],
+                        'bind_dn'                   => $data['auth_ldap_bind_dn'],
+                        'bind_pw'                   => $data['auth_ldap_bind_pw'],
+                        'user_class'                => $data['auth_ldap_user_class'],
+                        'user_name_attribute'       => $data['auth_ldap_user_name_attribute'],
+                        'user_password_attribute'   => $data['auth_ldap_user_password_attribute']
                     )
                 )
             );
@@ -222,11 +241,13 @@ class AuthConfigForm extends WizardForm
             'auth_preference_store'             => $this->getValue('auth_preference_store'),
             'auth_use_ldap'                     => $this->getValue('auth_use_ldap'),
             'auth_ldap_hostname'                => $this->getValue('auth_ldap_hostname'),
+            'auth_ldap_port'                    => $this->getValue('auth_ldap_port'),
             'auth_ldap_root_dn'                 => $this->getValue('auth_ldap_root_dn'),
             'auth_ldap_bind_dn'                 => $this->getValue('auth_ldap_bind_dn'),
             'auth_ldap_bind_pw'                 => $this->getValue('auth_ldap_bind_pw'),
             'auth_ldap_user_class'              => $this->getValue('auth_ldap_user_class'),
-            'auth_ldap_user_name_attributes'    => $this->getValue('auth_ldap_user_name_attributes')
+            'auth_ldap_user_name_attribute'     => $this->getValue('auth_ldap_user_name_attribute'),
+            'auth_ldap_user_password_attribute' => $this->getValue('auth_ldap_user_password_attribute')
         );
     }
 }

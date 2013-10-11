@@ -218,14 +218,16 @@ class Installer
 
         if ($authConfig->auth_use_ldap) {
             $iniContent['ldap_authentication'] = array(
-                'hostname'              => $authConfig->auth_ldap_hostname,
-                'root_dn'               => $authConfig->auth_ldap_root_dn,
-                'bind_dn'               => $authConfig->auth_ldap_bind_dn,
-                'bind_pw'               => $authConfig->auth_ldap_bind_pw,
-                'user_class'            => $authConfig->auth_ldap_user_class,
-                'user_name_attribute'   => $authConfig->auth_ldap_user_name_attributes,
-                'target'                => 'user',
-                'backend'               => 'ldap'
+                'hostname'                  => $authConfig->auth_ldap_hostname,
+                'port'                      => $authConfig->auth_ldap_port,
+                'root_dn'                   => $authConfig->auth_ldap_root_dn,
+                'bind_dn'                   => $authConfig->auth_ldap_bind_dn,
+                'bind_pw'                   => $authConfig->auth_ldap_bind_pw,
+                'user_class'                => $authConfig->auth_ldap_user_class,
+                'user_name_attribute'       => $authConfig->auth_ldap_user_name_attribute,
+                'user_password_attribute'   => $authConfig->auth_ldap_user_password_attribute,
+                'target'                    => 'user',
+                'backend'                   => 'ldap'
             );
             $this->log('Authentication configuration', 'Added LDAP authentication backend: ldap_authentication');
         }

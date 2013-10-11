@@ -91,11 +91,14 @@ class ConfirmationForm extends WizardForm
                     '<br />',
                     array(
                         'Hostname: ' . $session->authenticationDetails['auth_ldap_hostname'],
+                        'Port: ' . (empty($session->authenticationDetails['auth_ldap_port']) ? 'Default port' :
+                                    $session->authenticationDetails['auth_ldap_port']),
                         'root_dn: ' . $session->authenticationDetails['auth_ldap_root_dn'],
                         'bind_dn: ' . $session->authenticationDetails['auth_ldap_bind_dn'],
                         'bind_pw: ' . $session->authenticationDetails['auth_ldap_bind_pw'],
                         'user_class: ' . $session->authenticationDetails['auth_ldap_user_class'],
-                        'user_name_attributes: ' . $session->authenticationDetails['auth_ldap_user_name_attributes']
+                        'user_name_attributes: ' . $session->authenticationDetails['auth_ldap_user_name_attribute'],
+                        'user_password_attribute: ' . $session->authenticationDetails['auth_ldap_user_password_attribute']
                     )
                 )
             );
