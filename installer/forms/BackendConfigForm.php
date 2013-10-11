@@ -78,6 +78,17 @@ class BackendConfigForm extends WizardForm
         $backendSelection = $this->getRequest()->getPost('backend_selection');
         if ($backendSelection === null || $backendSelection === 'type_ido') {
             $this->addElement(
+                'text',
+                'backend_ido_resource',
+                array(
+                    'label'         => 'Resource name',
+                    'helptext'      => 'This is the name internally used by icingaweb to identify this database store.',
+                    'required'      => true,
+                    'allowEmpty'    => false,
+                    'value'         => 'icingaido'
+                )
+            );
+            $this->addElement(
                 'select',
                 'backend_ido_provider',
                 array(
@@ -243,6 +254,7 @@ class BackendConfigForm extends WizardForm
     {
         return array(
             'backend_name'          => $this->getValue('backend_name'),
+            'backend_ido_resource'  => $this->getValue('backend_ido_resource'),
             'backend_ido_provider'  => $this->getValue('backend_ido_provider'),
             'backend_ido_host'      => $this->getValue('backend_ido_host'),
             'backend_ido_port'      => $this->getValue('backend_ido_port'),

@@ -109,6 +109,7 @@ class ConfirmationForm extends WizardForm
         if ($session->backendDetails['backend_ido_host'] !== null) {
             $backendDetails = array(
                 'Backend type: Database',
+                'Resource name: ' . $session->backendDetails['backend_ido_resource'],
                 'Database provider: ' . $dbProviders[$session->backendDetails['backend_ido_provider']],
                 'Hostname: ' . $session->backendDetails['backend_ido_host'],
                 'Port: ' . (empty($session->backendDetails['backend_ido_port']) ? 'Default port' :

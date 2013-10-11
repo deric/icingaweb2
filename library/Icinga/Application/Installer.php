@@ -167,7 +167,7 @@ class Installer
 
         $backendConfig = $this->options->backendConfig;
         if ($backendConfig->backend_ido_host !== null) {
-            $iniContent[$backendConfig->backend_name] = array(
+            $iniContent[$backendConfig->backend_ido_resource] = array(
                 'type'      => 'db',
                 'db'        => $backendConfig->backend_ido_provider,
                 'host'      => $backendConfig->backend_ido_host,
@@ -176,9 +176,9 @@ class Installer
                 'password'  => $backendConfig->backend_ido_dbpass
             );
             if (!empty($backendConfig->backend_ido_port)) {
-                $iniContent[$backendConfig->backend_name]['port'] = $backendConfig->backend_ido_port;
+                $iniContent[$backendConfig->backend_ido_resource]['port'] = $backendConfig->backend_ido_port;
             }
-            $this->log('Resource configuration', 'Added IDO database store: ' . $backendConfig->backend_name);
+            $this->log('Resource configuration', 'Added IDO database store: ' . $backendConfig->backend_ido_resource);
         }
 
         $iniWriter = new PreservingIniWriter(
@@ -317,7 +317,7 @@ class Installer
 
         if ($backendConfig->backend_ido_host !== null) {
             $iniContent[$backendConfig->backend_name] = array(
-                'resource'  => $backendConfig->backend_name,
+                'resource'  => $backendConfig->backend_ido_resource,
                 'type'      => 'ido'
             );
         } elseif ($backendConfig->backend_dat_file !== null) {
