@@ -1,4 +1,9 @@
-<?php $currentStep = isset($this->form) ? $this->form->getCurrentStep() : 0; ?>
+<?php
+    $currentStep = isset($this->form) ? $this->form->getCurrentStep() : -1;
+    if ($currentStep === 0) { // The installation seems to be finished but we still want a progress on the last page
+        $currentStep = 7;
+    }
+?>
 <table class="table" style="margin: .7em;">
   <tr class="<?php echo $currentStep == 1 ? 'active' : ($currentStep > 1 ? 'success' : '') ?>">
     <td>Start</td>

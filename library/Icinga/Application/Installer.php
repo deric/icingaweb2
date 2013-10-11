@@ -369,7 +369,16 @@ class Installer
      */
     private function finalize()
     {
-        
+        $configPath = $this->configDir . '/config.ini';
+        $config = new Config($configPath);
+        $config->global->installed = 1;
+        $iniWriter = new PreservingIniWriter(
+            array(
+                'filename'  => $configPath,
+                'config'    => $config
+            )
+        );
+        $iniWriter->write();
     }
 
     /**
