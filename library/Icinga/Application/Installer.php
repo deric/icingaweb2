@@ -300,7 +300,52 @@ class Installer
      */
     private function setupBackend()
     {
-        
+        $configPath = $this->configDir . '/modules/monitoring/backends.ini';
+        $templatePath = $this->configDir . '/modules/monitoring/backends.ini.in';
+        if (!$this->cleanAutoconfIni($templatePath)) {
+            $message = 'Could not duplicate INI template: ' . $templatePath;
+            $this->log('Backend configuration', $message);
+            throw new Exception($message);
+        }
+        chmod($configPath, 0664);
+        $this->log('Backend configuration', 'Successfully duplicated INI template: ' . $templatePath);
+
+        $iniContent = array();
+        $backendConfig = $this->options->backendConfig;
+
+        if ($backendConfig->backend_ido_host !== null) {
+            $iniContent[$backendConfig->backend_name] = array(
+                'resource'  => $backendConfig->backend_name,
+                'type'      => 'ido'
+            );
+        } elseif ($backendConfig->backend_dat_file !== null) {
+            $iniContent[$backendConfig->backend_name] = array(
+                'status_file'   => $backendConfig->backend_dat_file,
+                'objects_file'  => $backendConfig->backend_dat_objects,
+                'type'          => 'statusdat'
+            );
+        } else { // $backendConfi->backend_live_socket !== null
+            $iniContent[$backendConfig->backend_name] = array(
+                'socket'    => $backendConfig->backend_live_socket,
+                'type'      => 'livestatus'
+            );
+        }
+
+        $iniWriter = new PreservingIniWriter(
+            array(
+                'config'    => new Zend_Config($iniContent),
+                'filename'  => $configPath
+            )
+        );
+
+        try {
+            $iniWriter->write();
+        } catch (Exception $error) {
+            $this->log('Backend configuration', 'Error while writing INI file: ' . $error->getMessage());
+            throw $error;
+        }
+
+        $this->log('Backend configuration', 'Configuration successfully written to: ' . $configPath);
     }
 
     /**
