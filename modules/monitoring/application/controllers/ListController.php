@@ -47,6 +47,7 @@ use Icinga\Module\Monitoring\DataView\Contactgroup as ContactgroupView;
 use Icinga\Module\Monitoring\DataView\HostAndServiceStatus as HostAndServiceStatusView;
 use Icinga\Module\Monitoring\DataView\Comment as CommentView;
 use Icinga\Module\Monitoring\DataView\Groupsummary as GroupsummaryView;
+use Icinga\Module\Monitoring\DataView\Logentry as LogentryView;
 
 class Monitoring_ListController extends MonitoringController
 {
@@ -364,6 +365,24 @@ class Monitoring_ListController extends MonitoringController
         $this->setupSortControl(array(
             'hostgroup_name' => 'Hostgroup Name'
         ));
+    }
+
+    /**
+     * Display events from daemon
+     */
+    public function eventsAction()
+    {
+        $query = LogentryView::fromRequest(
+            $this->_request
+        )->getQuery();
+        $this->handleFormatRequest($query);
+        $this->view->logentries = $query->paginate();
+        $this->setupSortControl(
+            array(
+                'time' => 'Entry Time',
+                'type' => 'Entry Type'
+            )
+        );
     }
 
     /**

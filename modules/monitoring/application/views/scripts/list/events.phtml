@@ -1,0 +1,34 @@
+<?php
+    $logentries = $this->logentries;
+?>
+
+<?= $this->tabs->render($this); ?>
+
+<?= $this->sortControl->render($this); ?>
+
+<?= $this->paginationControl($logentries); ?>
+
+<table class="table table-condensed">
+
+    <tbody>
+    <?php foreach ($logentries as $logentry): ?>
+    <tr>
+        <td>
+            <?= $this->dateFormat()->formatDateTime($logentry->time); ?>
+            <div class="small-row">
+                since <?= $this->timeSince($logentry->time); ?>
+            </div>
+        </td>
+        <td>
+            <strong><?= $this->MonitoringLogFacility()->readableValue($logentry->type); ?></strong>
+
+            <div class="small-row">
+                <?= $logentry->data; ?>
+            </div>
+        </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
+
+<?= $this->paginationControl($logentries); ?>

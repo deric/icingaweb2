@@ -1,7 +1,9 @@
 <?php
 // {{{ICINGA_LICENSE_HEADER}}}
 /**
- * Icinga 2 Web - Head for multiple monitoring frontends
+ * This file is part of Icinga 2 Web.
+ *
+ * Icinga 2 Web - Head for multiple monitoring backends.
  * Copyright (C) 2013 Icinga Development Team
  *
  * This program is free software; you can redistribute it and/or
@@ -15,17 +17,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
+ *
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * @copyright 2013 Icinga Development Team <info@icinga.org>
- * @author Icinga Development Team <info@icinga.org>
+ * @license   http://www.gnu.org/licenses/gpl-2.0.txt GPL, version 2
+ * @author    Icinga Development Team <info@icinga.org>
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
 namespace Icinga\Module\Monitoring\DataView;
 
-class Notification extends DataView
+class Logentry extends DataView
 {
     /**
      * Retrieve columns provided by this view
@@ -35,28 +39,25 @@ class Notification extends DataView
     public function getColumns()
     {
         return array(
-            'host_name',
-            'service_description',
-            'notification_type',
-            'notification_reason',
-            'notification_start_time',
-            'notification_contact',
-            'notification_information',
-            'notification_command'
+            'id',
+            'time',
+            'type',
+            'data'
         );
     }
 
     /**
-     * Default sorting of logentries
+     * Retrieve default sorting rules for particular columns. These involve sort order and potential additional to sort
      *
      * @return array
      */
     public function getSortRules()
     {
         return array(
-            'notification_start_time' => array(
+            'time' => array(
                 'order' => self::SORT_DESC
             )
         );
     }
+
 }
