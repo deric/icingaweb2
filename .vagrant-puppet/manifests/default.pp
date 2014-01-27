@@ -345,7 +345,8 @@ configure { 'icingaweb':
             --with-httpd-config-path="/etc/httpd/conf.d" \
             --with-ldap-authentication \
             --with-internal-authentication \
-            --with-livestatus-socket="/usr/local/icinga-mysql/var/rw/live"'
+            --with-livestatus-socket="/usr/local/icinga-mysql/var/rw/live"',
+  require => Exec['install ZendFramework']
 }
 
 file { 'icingaweb-public':
