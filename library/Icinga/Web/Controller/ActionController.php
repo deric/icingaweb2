@@ -42,6 +42,7 @@ use Icinga\Application\Config;
 use Icinga\Web\Notification;
 use Icinga\Web\Widget\Tabs;
 use Icinga\Web\Url;
+use Icinga\Application\Logger;
 use Icinga\Web\Request;
 
 use Icinga\File\Pdf;
@@ -243,32 +244,20 @@ class ActionController extends Zend_Controller_Action
                 $this->_request->getControllerName() . '/' . $this->_request->getActionName() . '.phtml'
             );
             $this->sendAsPdf($html);
+            die();
         }
     }
 
     protected function sendAsPdf($body)
     {
-        $css = $this->view->getHelper('action')->action('stylesheet', 'static', 'application');
-        $css = <<<EOF
-
-
-EOF;
-        $html = '<html><head></head><body><style>' . $css . '</style>' . $body . '</body></html>';
-        $pdf = new PDF();
-        $pdf->AddPage();
-        $pdf->writeHTML($html);
-        $pdf->Output($this->getRequest()->getActionName() . '.pdf', 'I');
-    }
-
-    /**
-     * @param DOMDocument $doc
-     * @param             $tag
-     */
-    private function removeNodeByTagName(DOMDocument $doc, $tag)
-    {
-        $forms = $doc->getElementsByTagName($tag);
-        foreach ($forms as $form) {
-            $form->parentNode->removeChild($form);;
+        if (!headers_sent()) {
+            $css = $this->view->getHelper('action')->action('stylesheet', 'static', 'application');
+            $pdf = new PDF();
+            $pdf->renderPage($body, $css);
+            $pdf->stream($this->_request->getControllerName() . '-' . $this->_request->getActionName() . '.pdf');
+        } else {
+            Logger::error('Could not send pdf-response, content already written to output.');
+            die();
         }
     }
 
