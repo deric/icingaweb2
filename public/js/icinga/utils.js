@@ -39,7 +39,7 @@
     },
 
     /**
-     * Parse a given Url and return an object 
+     * Parse a given Url and return an object
      */
     parseUrl: function(url)
     {

@@ -179,7 +179,7 @@
               $(el).closest('table.action').find('.active').removeClass('active');
             }
           });
-        
+
 
           $matches.each(function(idx, el) {
             if ($(el).closest('#menu').length) {
@@ -278,7 +278,7 @@
                       this.icinga.utils.timeShort() +
                       '.'
                   );
-                  
+
                   this.icinga.ui.fixControls();
                 }
                 this.icinga.logger.error(
