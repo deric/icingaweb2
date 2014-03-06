@@ -105,7 +105,7 @@
   };
 
   Icinga.Timer.Interval = function(callback, interval) {
-
+    
     if (typeof interval === 'undefined') {
       throw 'Timer interval is required';
     }
@@ -135,7 +135,7 @@
         while (this.scheduledNextRun < this.lastRun) {
           this.scheduledNextRun += this.interval;
         }
-        this.callback();
+        this.callback();    
     },
 
     destroy: function()
