@@ -95,7 +95,6 @@
             }
 
             var self = this;
-            console.log("$.ajax({ url = " + url + " })");
             var req = $.ajax({
                 type   : method,
                 url    : url,
