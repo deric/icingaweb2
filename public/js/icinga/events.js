@@ -93,11 +93,9 @@
             // We want to catch each link click
             $(document).on('click', 'a', { self: this }, this.linkClicked);
 
-            // We treat tr's with a href attribute like links
-            $(document).on('click', ':not(table) tr[href]', { self: this }, this.linkClicked);
-
-            // Select a table.
+            // Select a table row
             $(document).on('click', 'table tr[href]', { self: this }, this.rowSelected);
+            $(document).on('click', 'table tr a', { self: this }, this.rowSelected);
 
             $(document).on('click', 'button', { self: this }, this.submitForm);
 
@@ -305,8 +303,15 @@
             var multisel = $table.hasClass('multiselect');
             var url      = $table.data('icinga-multiselect-url');
             var $trs, $target;
+
+            // When the selection points to a link, select the closest row
+            if ($tr.prop('tagName').toLowerCase() === 'a') {
+                $tr = $tr.closest('tr').first();
+            }
+
             event.stopPropagation();
             event.preventDefault();
+
             if (icinga.events.handleExternalTarget($tr)) {
                 // link handled externally
                 return false;
@@ -331,9 +336,11 @@
                 // single selection
                 icinga.ui.setTableRowSelection($tr);
             }
-            $trs = $table.find('tr[href].active');
+            // focuse only the current table.
+            icinga.ui.focusTable($table[0]);
 
             // Update url
+            $trs = $table.find('tr[href].active');
             $target = self.getLinkTargetFor($tr);
             if ($trs.length > 1) {
                 // display multiple rows
@@ -406,6 +413,11 @@
             if (linkTarget === '_blank' || linkTarget === '_self') {
                 window.open(href, linkTarget);
                 return false;
+            }
+
+            // ignore links inside of tables.
+            if ($a.closest('table tr').length > 0) {
+                return;
             }
 
             // Handle all other links as XHR requests
@@ -517,7 +529,8 @@
             $(window).off('beforeunload', this.onUnload);
             $(document).off('scroll', '.container', this.onContainerScroll);
             $(document).off('click', 'a', this.linkClicked);
-            $(document).off('click', 'tr[href]', this.linkClicked);
+            $(document).off('click', 'table tr[href]', this.rowSelected);
+            $(document).off('click', 'table tr a', this.rowSelected);
             $(document).off('submit', 'form', this.submitForm);
             $(document).off('click', 'button', this.submitForm);
             $(document).off('change', 'form select.autosubmit', this.submitForm);
