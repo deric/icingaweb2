@@ -242,6 +242,8 @@
             if (! req.autorefresh) {
                 // TODO: Hook for response/url?
                 var $forms = $('[action="' + this.icinga.utils.parseUrl(url).path + '"]');
+
+                console.log('Old URL: ' + url);
                 var $matches = $.merge($('[href="' + url + '"]'), $forms);
                 $matches.each(function (idx, el) {
                     if ($(el).closest('#menu').length) {
@@ -268,6 +270,7 @@
                 });
             } else {
                 // TODO: next container url
+                // Get first container url?
                 active = $('[href].active', req.$target).attr('href');
             }
 
@@ -384,18 +387,7 @@
                     this.icinga.history.pushCurrentState();
                 }
             }
-
-
-            /*
-             * Replace SVG piecharts with jQuery-Sparkline
-             */
-            $('.inlinepie', $resp).each(function(){
-                var title  = $(this).attr('title'),
-                    style  = $(this).attr('style'),
-                    values = $(this).data('icinga-values'),
-                    html   = '<div class="inlinepie" style="' + style + '" title="' + title + '">' + values + '</div>';
-                $(this).replaceWith(html);
-            });
+            this.icinga.ui.initializeTriStates($resp);
 
             /**
              * Make multiselection-tables not selectable.
