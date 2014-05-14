@@ -30,6 +30,10 @@
 
 namespace Icinga\Form\Install;
 
+use Icinga\Authentication\Backend\DbUserBackend;
+use Icinga\Authentication\Backend\LdapUserBackend;
+use Icinga\Authentication\UserBackend;
+use Icinga\Data\ResourceFactory;
 use Icinga\Web\Wizard\Page;
 use Zend_Config;
 use Icinga\Web\Form;
@@ -77,11 +81,18 @@ class AdministrationPage extends Page
     protected $title = '';
 
     /**
+     * The authentication-backend to use for fetching available users
+     *
+     * @var Zend_Config
+     */
+    private $backendConfiguration = array();
+
+    /**
      * Contains all available users.
      *
      * @var array
      */
-    private $users = array();
+    private $users;
 
     /**
      * Initialise this form.
@@ -90,6 +101,43 @@ class AdministrationPage extends Page
     {
         $this->setName('administration');
         $this->title = t('Administration');
+
+    }
+
+    /**
+     * Fetch all users from the current Backend.
+     */
+    private function getUsersFromBackend()
+    {
+        if (isset($this->users)) {
+            return $this->users;
+        }
+
+        // TODO: Fetch type of backend from authentication-page configuration (refs #6141)
+        $databaseConf = $this->wizard->getConfig()->get('authentication');
+        $this->backendConfiguration = $databaseConf;
+
+        switch ($this->authenticationMode) {
+            case self::AUTHENTICATION_MODE_DATABASE:
+                // TODO: Use backend from Authentication-Page instead (refs #6141)
+                $authBackend = new DbUserBackend(
+                    ResourceFactory::createResource(ResourceFactory::getResourceConfig('internal_db'))
+                );
+                $this->users = $authBackend->getUsers();
+                break;
+
+            case self::AUTHENTICATION_MODE_LDAP:
+                // TODO: Use backend from Authentication-Page instead (refs #6141)
+                // TODO: Use userClass and userNameAttribute from authentication-page configuration refs (#6141)
+                $authBackend = new LdapUserBackend(
+                    ResourceFactory::createResource(ResourceFactory::getResourceConfig('internal_ldap')),
+                    'inetOrgPerson',
+                    'uid'
+                );
+                $this->users = $authBackend->getUsers();
+                break;
+        }
+        return $this->users;
     }
 
     /**
@@ -99,13 +147,15 @@ class AdministrationPage extends Page
      */
     public function create()
     {
+        $users = $this->getUsersFromBackend();
         $config = $this->getConfig();
 
         if (empty($users) && $this->authenticationMode === self::AUTHENTICATION_MODE_LDAP) {
             $this->addErrorMessage(
                 t(
                     'No users available in the given LDAP backend, installation not possible.'
-                    . ' Create a new user .'
+                    . ' Change the used backend configuration in the page "configuration" or add at'
+                    . ' least one user to your ldap backend.'
                 )
             );
             return;
@@ -129,7 +179,7 @@ class AdministrationPage extends Page
                     'required'  => true,
                     'disableHidden' => true,
                     'label' => t('Create User?'),
-                    'helptext' => t('Do you want to give administration privileges to a new user or an existing one?')
+                    'helptext' => t('You can give administration privileges to an existing user or a new one.')
                 )
             );
             $this->enableAutoSubmit(array('internal_administrator_select_type'));
