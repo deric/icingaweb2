@@ -148,4 +148,18 @@ class DbUserBackend extends UserBackend
 
         return ($row !== false) ? $row->count : 0;
     }
+
+    public function getUsers()
+    {
+        $select = new Zend_Db_Select($this->conn->getConnection());
+        $query = $select->from(
+            'account',
+            array('username')
+        )->query();
+        $users = array();
+        while ($username = $query->fetchColumn()) {
+            $users[] = $username;
+        }
+        return $users;
+    }
 }

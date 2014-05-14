@@ -75,7 +75,7 @@ class InstallController extends ActionController
 //                t('Authentication') => 'Icinga\Form\Install\AuthenticationPage',
                 t('Administration') => 'Icinga\Form\Install\AdministrationPage',
 //                t('Preferences') => 'Icinga\Form\Install\PreferencesPage',
-//                t('Logging') => 'Icinga\Form\Install\LoggingPage',
+                t('Logging') => 'Icinga\Form\Install\LoggingPage',
 //                t('Database Setup') => 'Icinga\Form\Install\DatabasePage',
 //                t('Summary') => 'Icinga\Form\Install\SummaryPage'
 */

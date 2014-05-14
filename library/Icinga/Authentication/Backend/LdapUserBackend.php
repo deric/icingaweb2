@@ -131,5 +131,22 @@ class LdapUserBackend extends UserBackend
             )
         );
     }
+
+    /**
+     * Get a list of available users.
+     *
+     * @return array
+     */
+    public function getUsers()
+    {
+        $users = $this->conn->select()
+            ->from($this->userClass, array($this->userNameAttribute))
+            ->fetchAll();
+        $usernames = array();
+        foreach ($users as $userObject) {
+            $usernames[] = $userObject->uid;
+        }
+        return $usernames;
+    }
 }
 
