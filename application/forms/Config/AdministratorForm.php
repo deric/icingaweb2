@@ -31,7 +31,6 @@
 namespace Icinga\Form\Config;
 
 use Zend_Config;
-use Exception;
 use Icinga\Web\Form;
 use Zend_Validate_Identical;
 
@@ -40,6 +39,15 @@ use Zend_Validate_Identical;
  */
 class AdministratorForm extends Form
 {
+    private $authenticationMode = 'database';
+
+    private $users = array('jdoe' => 'jdoe', 'foo' => 'foo', 'bar' => 'bar');
+
+    public function setUsers(array $users)
+    {
+        $this->users = $users;
+    }
+
     /**
      * Create this logging configuration form
      *
@@ -48,13 +56,8 @@ class AdministratorForm extends Form
     public function create()
     {
         $this->setName('form_config_administrator');
-
-        $config = $this->getConfiguration();
-        if (($administratorConfig = $config->administrator) === null) {
-            $administratorConfig = new Zend_Config(array());
-        }
-        $authMode = $administratorConfig->get('authenticationMode', 'internal');
-        if ($authMode === 'external') {
+        $administratorConfig = $this->getConfig();
+        if ($this->authenticationMode === 'external') {
             $this->addElement(
                 'text',
                 'external_administrator',
@@ -66,31 +69,27 @@ class AdministratorForm extends Form
                 )
             );
         } else {
-            // TODO: Decide how an LdapUserBackend should be handled.
             $this->addElement(
                 'checkbox',
                 'internal_administrator_select_type',
                 array(
-                    'required'      => true,
-                    'label'         => t('Create a new user.'),
-                    'helptext'      => t('Do you want to create a new user as administrator?'),
-                    'value'         => 0
+                    'required'  => true,
+                    'label'     => t('Create a new user.'),
+                    'helptext'  => t('Do you want to create a new user as administrator?'),
+                    'value'     => 0
                 )
             );
 
-            // TODO: fetch list of available users from database.
-            $users = array('jdoe' => 'jdoe', 'foo' => 'foo', 'bar' => 'bar');
-
-            if ($administratorConfig->get('internal_administrator_select_type', 0) === 0 && !(empty($users))) {
+            if ($administratorConfig->get('internal_administrator_select_type', 0) === 0 && !(empty($this->users))) {
                 $this->addElement(
                     'select',
                     'internal_administrator_existing_username',
                     array(
-                        'required'      => true,
-                        'label'         => t('Administrator username'),
-                        'helptext'      => t('Choose the IcingaWeb administrator.'),
-                        'value'         => $administratorConfig->get('internal_administrator_existing', key($users)),
-                        'multiOptions'  => $users
+                        'required'     => true,
+                        'label'        => t('Administrator username'),
+                        'helptext'     => t('Choose the IcingaWeb administrator.'),
+                        'value'        => $administratorConfig->get('internal_administrator_existing', key($this->users)),
+                        'multiOptions' => $this->users
                     )
                 );
             } else {
@@ -106,10 +105,10 @@ class AdministratorForm extends Form
                     'text',
                     'internal_administrator_new_username',
                     array(
-                        'required'      => true,
-                        'label'         => t('Administrator username'),
-                        'helptext'      => t('Create a new IcingaWeb administrator.'),
-                        'value'         => $administratorConfig->get('internal_administrator_new', 0)
+                        'required'  => true,
+                        'label'     => t('Administrator username'),
+                        'helptext'  => t('Create a new IcingaWeb administrator.'),
+                        'value'     => $administratorConfig->get('internal_administrator_new', 0)
                     )
                 );
 
@@ -117,10 +116,10 @@ class AdministratorForm extends Form
                     'password',
                     'internal_administrator_new_password',
                     array(
-                        'required'  => true,
-                        'label' => t('Password'),
-                        'helptext' => t('Provide the password of the new administrator.'),
-                        'value' => $administratorConfig->get('internal_administrator_new_password', ''),
+                        'required'   => true,
+                        'label'      => t('Password'),
+                        'helptext'   => t('Provide the password of the new administrator.'),
+                        'value'      => $administratorConfig->get('internal_administrator_new_password', ''),
                         'validators' => array(array('NotEmpty'))
                     )
                 );
@@ -129,10 +128,10 @@ class AdministratorForm extends Form
                     'password',
                     'internal_administrator_new_confirm_password',
                     array(
-                        'required'  => true,
-                        'label' => t('Confirm Password'),
-                        'helptext' => t('Confirm the password of the new administrator.'),
-                        'value' => $administratorConfig->get('internal_administrator_new_confirm_password', ''),
+                        'required'   => true,
+                        'label'      => t('Confirm Password'),
+                        'helptext'   => t('Confirm the password of the new administrator.'),
+                        'value'      => $administratorConfig->get('internal_administrator_new_confirm_password', ''),
                         'validators' => array(new Zend_Validate_Identical('internal_administrator_new_password'))
                     )
                 );
@@ -170,16 +169,21 @@ class AdministratorForm extends Form
     public function getConfig()
     {
         $values = $this->getValues();
-        $cfg = $this->getConfiguration()->toArray();
-
-        if (!array_key_exists('administrator', $cfg)) {
-            $cfg['administrator'] = array();
-        }
-
-        if ($values['internal_administrator_select_type']) {
-            $cfg['administrator']['username'] = $values['internal_administrator_existing_username'];
+        $cfg = array();
+        if ($this->authenticationMode === 'external') {
+            if (array_key_exists('external_administrator', $values)) {
+                $cfg['external_administrator'] = $values['external_administrator'];
+            }
         } else {
-            $cfg['administrator']['username'] = $values['internal_administrator_new_username'];
+            if ($values['internal_administrator_select_type']) {
+                if (array_key_exists('internal_administrator_existing_username', $values)) {
+                    $cfg['username'] = $values['internal_administrator_existing_username'];
+                }
+            } else {
+                if (array_key_exists('internal_administrator_new_username', $values)) {
+                    $cfg['username'] = $values['internal_administrator_new_username'];
+                }
+            }
         }
         return new Zend_Config($cfg);
     }
