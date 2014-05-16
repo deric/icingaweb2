@@ -19,14 +19,6 @@ class LoggingPage extends Page
     protected $loggingForm;
 
     /**
-     * Initialize this LoggingPage
-     */
-    public function init()
-    {
-        $this->setName('logging');
-    }
-
-    /**
      * Create and return the logging form
      *
      * @return  LoggingForm

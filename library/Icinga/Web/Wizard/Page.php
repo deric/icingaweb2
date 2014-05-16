@@ -42,14 +42,6 @@ class Page extends Form
     }
 
     /**
-     * Overwrite this to initialize this wizard page
-     */
-    public function init()
-    {
-
-    }
-
-    /**
      * Return whether this page needs to be shown to the user
      *
      * Overwrite this to add page specific handling

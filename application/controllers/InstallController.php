@@ -61,14 +61,14 @@ class InstallController extends ActionController
         $wizard->setConfiguration($this->loadConfiguration());
         $wizard->addPages(
             array(
-//                t('Welcome') => 'Icinga\Form\Install\WelcomePage',
-//                t('Requirements') => 'Icinga\Form\Install\RequirementsPage',
-//                t('Authentication') => 'Icinga\Form\Install\AuthenticationPage',
-//                t('Administration') => 'Icinga\Form\Install\AdministrationPage',
-//                t('Preferences') => 'Icinga\Form\Install\PreferencesPage',
-                t('Logging') => 'Icinga\Form\Install\LoggingPage',
-//                t('Database Setup') => 'Icinga\Form\Install\DatabasePage',
-//                t('Summary') => 'Icinga\Form\Install\SummaryPage'
+//                array('welcome', t('Welcome'), 'Icinga\Form\Install\WelcomePage'),
+//                array('requirements', t('Requirements'), 'Icinga\Form\Install\RequirementsPage'),
+//                array('authentication', t('Authentication'), 'Icinga\Form\Install\AuthenticationPage'),
+//                array('preferences', t('Preferences'), 'Icinga\Form\Install\PreferencesPage'),
+//                array('db_setup', t('Database Setup'), 'Icinga\Form\Install\DatabasePage'),
+                array('logging', t('Logging'), 'Icinga\Form\Install\LoggingPage'),
+//                array('admin', t('Administration'), 'Icinga\Form\Install\AdministrationPage'),
+//                array('summary', t('Summary'), 'Icinga\Form\Install\SummaryPage')
             )
         );
 

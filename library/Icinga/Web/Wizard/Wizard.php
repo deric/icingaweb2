@@ -88,22 +88,26 @@ class Wizard extends Page
     /**
      * Add multiple pages to this wizard
      *
-     * The given array's keys are titles and its values are class names to add
-     * as wizard pages. An array as value causes a sub-wizard being added.
+     * $pages is an array of arrays where each contained array consists
+     * of three values: page-name, page-title, page-class or array
+     * An array as third value causes a sub-wizard being added.
      *
      * @param   array   $pages      The pages to add to the wizard
      */
     public function addPages(array $pages)
     {
-        foreach ($pages as $title => $pageClassOrArray) {
+        foreach ($pages as $pageOptions) {
+            list($name, $title, $pageClassOrArray) = $pageOptions;
             if (is_array($pageClassOrArray)) {
                 $wizard = new static($this);
                 $wizard->setTitle($title);
+                $wizard->setName($name);
                 $this->addPage($wizard);
                 $wizard->addPages($pageClassOrArray);
             } else {
                 $page = new $pageClassOrArray($this);
                 $page->setTitle($title);
+                $page->setName($name);
                 $this->addPage($page);
             }
         }
