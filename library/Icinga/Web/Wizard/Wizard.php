@@ -11,8 +11,10 @@ use Icinga\Exception\ProgrammingError;
 /**
  * Multistep form with support for nesting and dynamic behaviour
  *
- * @todo    Pages that were displayed initially and filled out by the user remain
- *          currently in the configuration returned by Wizard::getConfig()
+ * @todo    Pages that were displayed initially and filled out by the user remain currently in the
+ *          configuration returned by Wizard::getConfig() (even if they are not shown anymore)
+ * @todo    Only one level of nested wizards is possible at the moment. That's because Wizard::create() cannot
+ *          handle multiple levels. Though, Wizard::isSubmitted() and Wizard::navigate() are capable to do this.
  */
 class Wizard extends Page
 {
@@ -243,14 +245,19 @@ class Wizard extends Page
     }
 
     /**
-     * Return whether either the back- or next-button was clicked
+     * Return whether the back- or next-button of the wizard or a button on the current page was clicked
      *
      * @see Form::isSubmitted()
      */
     public function isSubmitted()
     {
         $checkData = $this->getRequest()->getParams();
-        return isset($checkData['btn_return']) || isset($checkData['btn_advance']);
+        if (isset($checkData['btn_return']) || isset($checkData['btn_advance'])) {
+            return true;
+        }
+
+        $currentPage = $this->getCurrentPage();
+        return $currentPage->canBeSubmitted() && $currentPage->isSubmitted();
     }
 
     /**

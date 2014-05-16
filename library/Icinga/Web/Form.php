@@ -444,12 +444,25 @@ class Form extends Zend_Form
     public function isSubmitted()
     {
         $submitted = true;
-        if ($this->submitLabel) {
+        if (!$this->buttonsHidden && $this->submitLabel) {
             $checkData = $this->getRequest()->getParams();
             $submitted = isset($checkData['btn_submit']);
         }
 
         return $submitted;
+    }
+
+    /**
+     * Return whether this form can be submitted
+     *
+     * q&d solution due to Form::hideButtons() and the fact that Form::isSubmitted()
+     * returns true if no submit button is available. MUST NOT survive any refactoring!
+     *
+     * @return  bool
+     */
+    public function canBeSubmitted()
+    {
+        return !$this->buttonsHidden && $this->submitLabel;
     }
 
     /**
