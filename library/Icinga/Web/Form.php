@@ -631,5 +631,6 @@ class Form extends Zend_Form
     {
         $this->created = false;
         $this->clearElements();
+        $this->clearSubForms();
     }
 }
