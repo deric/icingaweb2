@@ -14,6 +14,37 @@ use Icinga\User\Preferences\PreferencesStore;
 
 /**
  * Load and save user preferences from and to INI files
+ *
+ * Usage example:
+ * <code>
+ * <?php
+ *
+ * use Zend_Config;
+ * use Icinga\User\Preferences;
+ * use Icinga\User\Preferences\PreferencesStore;
+ * use Icinga\User\Preferences\Store\IniStore;
+ *
+ * // Create the store from the factory (preferred approach)
+ * $store = new PreferencesStore(
+ *     new Zend_Config(
+ *         'type'       => 'ini',
+ *         'location'   => '/path/to/preferences'
+ *     ),
+ *     $user // Instance of \Icinga\User
+ * );
+ *
+ * // Create the store directly
+ * $store = new IniStore(
+ *     new Zend_Config(
+ *         'location' => '/path/to/preferences'
+ *     ),
+ *     $user // Instance of \Icinga\User
+ * );
+ *
+ * $preferences = new Preferences($store->load());
+ * $preferences->aPreference = 'value';
+ * $store->save($preferences);
+ * </code>
  */
 class IniStore extends PreferencesStore
 {

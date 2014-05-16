@@ -12,7 +12,37 @@ use Icinga\User\Preferences;
 use Icinga\User\Preferences\PreferencesStore;
 
 /**
- * Load and save user preferences by using a database
+ * Load and save user preferences using a database
+ *
+ * Usage example:
+ * <code>
+ * <?php
+ *
+ * use Zend_Config;
+ * use Icinga\User\Preferences;
+ * use Icinga\User\Preferences\PreferencesStore;
+ * use Icinga\User\Preferences\Store\DbStore;
+ *
+ * // Create the store from the factory (preferred approach)
+ * $store = new PreferencesStore(
+ *     new Zend_Config(
+ *         'connection' => $connection,  // Instance of \Icinga\Data\Db\Connection
+ *     ),
+ *     $user // Instance of \Icinga\User
+ * );
+ *
+ * // Create the store directly
+ * $store = new DbStore(
+ *     new Zend_Config(
+ *         'connection' => $connection,  // Instance of \Icinga\Data\Db\Connection
+ *     ),
+ *     $user // Instance of \Icinga\User
+ * );
+ *
+ * $preferences = new Preferences($store->load());
+ * $preferences->aPreference = 'value';
+ * $store->save($preferences);
+ * </code>
  */
 class DbStore extends PreferencesStore
 {
