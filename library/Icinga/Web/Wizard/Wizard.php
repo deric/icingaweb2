@@ -76,7 +76,7 @@ class Wizard extends Page
 
         $wizardConfig = $this->getConfig();
         if ($wizardConfig->get($pageName) === null) {
-            $wizardConfig->{$pageName} = new Zend_Config(array(), true);
+            $wizardConfig->{$pageName} = new Zend_Config(array());
         }
 
         $page->setConfiguration($wizardConfig->{$pageName});
