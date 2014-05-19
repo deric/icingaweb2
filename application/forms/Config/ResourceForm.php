@@ -30,11 +30,12 @@
 namespace Icinga\Form\Config;
 
 use Exception;
+use Icinga\Form\Config\Resource\DbResourceForm;
+use Icinga\Form\Config\Resource\LdapResourceForm;
 use Zend_Config;
 use Zend_Form_Element_Checkbox;
 use Icinga\Web\Form;
 use Icinga\Data\ResourceFactory;
-use Icinga\Web\Form\Element\Number;
 use Icinga\Web\Form\Decorator\HelpText;
 
 class ResourceForm extends Form
@@ -59,6 +60,13 @@ class ResourceForm extends Form
      * @var string
      */
     protected $oldName;
+
+    /**
+     * The subForm for the currently used resource.
+     *
+     * @var Zend_Form
+     */
+    protected $resourceSubForm;
 
     /**
      * Set the current resource name
@@ -136,78 +144,9 @@ class ResourceForm extends Form
 
     protected function addDbForm()
     {
-        $this->addElement(
-            'select',
-            'resource_db_db',
-            array(
-                'required'      => true,
-                'label'         => t('Database Type'),
-                'helptext'      => t('The type of SQL database you want to create.'),
-                'value'         => $this->getResource()->get('db', 'mysql'),
-                'multiOptions'  => array(
-                    'mysql'         => 'MySQL',
-                    'pgsql'         => 'PostgreSQL'
-                    //'oracle'        => 'Oracle'
-                )
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_db_host',
-            array (
-                'required'  => true,
-                'label'     => t('Host'),
-                'helptext'  => t('The hostname of the database.'),
-                'value'     => $this->getResource()->get('host', 'localhost')
-            )
-        );
-
-        $this->addElement(
-            new Number(
-                array(
-                    'name'      => 'resource_db_port',
-                    'required'  => true,
-                    'label'     => t('Port'),
-                    'helptext'  => t('The port to use.'),
-                    'value'     => $this->getResource()->get('port', 3306)
-                )
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_db_dbname',
-            array(
-                'required'  => true,
-                'label'     => t('Database Name'),
-                'helptext'  => t('The name of the database to use'),
-                'value'     => $this->getResource()->get('dbname', '')
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_db_username',
-            array (
-                'required'  => true,
-                'label'     => t('Username'),
-                'helptext'  => t('The user name to use for authentication.'),
-                'value'     => $this->getResource()->get('username', '')
-            )
-        );
-
-        $this->addElement(
-            'password',
-            'resource_db_password',
-            array(
-                'required'          => true,
-                'renderPassword'    => true,
-                'label'             => t('Password'),
-                'helptext'          => t('The password to use for authentication'),
-                'value'             => $this->getResource()->get('password', '')
-            )
-        );
+        $dbResource = new DbResourceForm();
+        $dbResource->setResource($this->getResource());
+        $this->addSubForm($dbResource, 'db_resource');
     }
 
     protected function addStatusdatForm()
@@ -251,51 +190,9 @@ class ResourceForm extends Form
 
     protected function addLdapForm()
     {
-        $this->addElement(
-            'text',
-            'resource_ldap_hostname',
-            array(
-                'required'      => true,
-                'allowEmpty'    => false,
-                'label'         => t('Host'),
-                'helptext'      => t('The hostname or address of the LDAP server to use for authentication'),
-                'value'         => $this->getResource()->get('hostname', 'localhost')
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_ldap_root_dn',
-            array(
-                'required'  => true,
-                'label'     => t('Root DN'),
-                'helptext'  => t('The path where users can be found on the ldap server'),
-                'value'     => $this->getResource()->get('root_dn', 'ou=people,dc=icinga,dc=org')
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_ldap_bind_dn',
-            array(
-                'required'  => true,
-                'label'     => t('Bind DN'),
-                'helptext'  => t('The user dn to use for querying the ldap server'),
-                'value'     => $this->getResource()->get('bind_dn', 'cn=admin,cn=config')
-            )
-        );
-
-        $this->addElement(
-            'password',
-            'resource_ldap_bind_pw',
-            array(
-                'required'          => true,
-                'renderPassword'    => true,
-                'label'             => t('Bind Password'),
-                'helptext'          => t('The password to use for querying the ldap server'),
-                'value'             => $this->getResource()->get('bind_pw', '')
-            )
-        );
+        $ldapResource = new LdapResourceForm();
+        $ldapResource->setResource($this->getResource());
+        $this->addSubForm($ldapResource, 'ldap_resource');
     }
 
     protected function addFileForm()
@@ -420,34 +317,13 @@ class ResourceForm extends Form
      */
     public function isValidResource()
     {
-        $config = $this->getConfig();
+        return $this->resourceSubForm->isValidResource();
 
+        // TODO: Find a way to handle this properly.
         try {
             switch ($config->type) {
                 case 'db':
-                    /*
-                     * It should be possible to run icingaweb without the pgsql or mysql extension or Zend-Pdo-Classes,
-                     * in case they aren't actually used. When the user tries to create a resource that depends on an
-                     * uninstalled extension, an error should be displayed.
-                     */
-                    if ($config->db === 'mysql' && !ResourceFactory::mysqlAvailable()) {
-                        $this->addErrorMessage(
-                            t('You need to install the php extension "mysql" and the ' .
-                              'Zend_Pdo_Mysql classes to use  MySQL database resources.')
-                        );
-                        return false;
-                    }
-                    if ($config->db === 'pgsql' && !ResourceFactory::pgsqlAvailable()) {
-                        $this->addErrorMessage(
-                            t('You need to install the php extension "pgsql" and the ' .
-                              'Zend_Pdo_Pgsql classes to use  PostgreSQL database resources.')
-                        );
-                        return false;
-                    }
-
-                    $resource = ResourceFactory::createResource($config);
-                    $resource->getConnection()->getConnection();
-                    break;
+                    // TODO:
                 case 'statusdat':
                     if (!file_exists($config->object_file) || !file_exists($config->status_file)) {
                         $this->addErrorMessage(
@@ -461,8 +337,7 @@ class ResourceForm extends Form
                     $resource->connect()->disconnect();
                     break;
                 case 'ldap':
-                    $resource = ResourceFactory::createResource($config);
-                    $resource->connect();
+
                     break;
                 case 'file':
                     if (!file_exists($config->filename)) {
@@ -474,7 +349,7 @@ class ResourceForm extends Form
                     break;
             }
         } catch (Exception $e) {
-            $this->addErrorMessage(t('Connectivity validation failed, connection to the given resource not possible.'));
+            $this->addErrorMessage();
             return false;
         }
 
@@ -516,7 +391,11 @@ class ResourceForm extends Form
     {
         $values = $this->getValues();
 
-        $result = array('type' => $values['resource_type']);
+        $result = array();
+        if (array_key_exists('resource_type', $values)) {
+            $result['type'] = $values['resource_type'];
+        }
+
         foreach ($values as $key => $value) {
             if ($key !== 'resource_type' && $key !== 'resource_all_name' && $key !== 'resource_all_name_old') {
                 $configKey = explode('_', $key, 3);
