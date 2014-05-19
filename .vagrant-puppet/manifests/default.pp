@@ -727,7 +727,8 @@ file { '/etc/httpd/conf.d/icingaweb.conf':
   notify    => Service['apache']
 }
 
-file { '/etc/icingaweb':
+file { [ '/etc/icingaweb', '/etc/icingaweb/enabledModules', '/etc/icingaweb/modules',
+         '/etc/icingaweb/modules/monitoring', '/etc/icingaweb/dashboard' ]:
   ensure    => 'directory',
   owner     => 'apache',
   group     => 'apache'
@@ -760,34 +761,25 @@ file { '/etc/icingaweb/resources.ini':
   replace   => false
 }
 
-file { ['/etc/icingaweb/enabledModules', '/etc/icingaweb/modules', '/etc/icingaweb/modules/monitoring']:
-  ensure    => 'directory',
-  owner     => 'apache',
-  group     => 'apache',
-}
-
 file { '/etc/icingaweb/modules/monitoring/backends.ini':
    source    => 'puppet:////vagrant/.vagrant-puppet/files/etc/icingaweb/modules/monitoring/backends.ini',
    owner     => 'apache',
    group     => 'apache',
+   require   => File['/etc/icingaweb/modules/monitoring']
 }
 
 file { '/etc/icingaweb/modules/monitoring/instances.ini':
   source    => 'puppet:////vagrant/.vagrant-puppet/files/etc/icingaweb/modules/monitoring/instances.ini',
   owner     => 'apache',
   group     => 'apache',
+  require   => File['/etc/icingaweb/modules/monitoring']
 }
 
 file { '/etc/icingaweb/modules/monitoring/menu.ini':
   source    => 'puppet:////vagrant/.vagrant-puppet/files/etc/icingaweb/modules/monitoring/menu.ini',
   owner     => 'apache',
   group     => 'apache',
-}
-
-file { '/etc/icingaweb/dashboard':
-  ensure    => 'directory',
-  owner     => 'apache',
-  group     => 'apache',
+  require   => File['/etc/icingaweb/modules/monitoring']
 }
 
 file { '/etc/icingaweb/dashboard/dashboard.ini':
