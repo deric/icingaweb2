@@ -2,9 +2,9 @@
 
 namespace Icinga\Data\DataArray;
 
-use Icinga\Data\DatasourceInterface;
+use Icinga\Data\Selectable;
 
-class Datasource implements DatasourceInterface
+class Datasource implements Selectable
 {
     protected $data;
 
