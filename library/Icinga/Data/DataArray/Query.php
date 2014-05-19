@@ -16,6 +16,8 @@ class Query extends BaseQuery
      */
     protected $result;
 
+    private $columns;
+
     public function getCount()
     {
         return $this->count;
@@ -63,7 +65,7 @@ class Query extends BaseQuery
      */
     public function compare(& $a, & $b, $col_num = 0)
     {
-        $orderColumns = $this->getOrderColumns();
+        $orderColumns = $this->orderBy;
         if (! array_key_exists($col_num, $orderColumns)) {
             return 0;
         }
@@ -95,5 +97,54 @@ class Query extends BaseQuery
     public function applyFilter()
     {
         return null;
+    }
+
+    public function getColumns()
+    {
+        return $this->columns;
+    }
+
+    /**
+     * Set the target and fields to select
+     *
+     * @param   string  $target
+     * @param   array   $columns
+     *
+     * @return  self
+     */
+    public function from($target, array $columns = null)
+    {
+        $this->columns = $columns;
+        return $this;
+    }
+
+    /**
+     * Add a where condition to the query by and
+     *
+     * The syntax of the condition and valid values are defined by the concrete backend-specific query implementation.
+     *
+     * @param   string  $condition
+     * @param   mixed   $value
+     *
+     * @return  self
+     */
+    public function where($condition, $value = null)
+    {
+        return $this;
+    }
+
+    /**
+     * Add a where condition to the query by or
+     *
+     * The syntax of the condition and valid values are defined by the concrete backend-specific query implementation.
+     *
+     * @param   string  $condition
+     * @param   mixed   $value
+     *
+     * @return  self
+     */
+    public function orWhere($condition, $value = null)
+    {
+        return $this;
     }
 }
