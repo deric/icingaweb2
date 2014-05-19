@@ -94,3 +94,41 @@ div.wizard {
     bottom: 0;
   }
 }
+
+table.requirements {
+  border-spacing: 0.5em;
+  border-collapse: separate;
+
+  tbody {
+    tr {
+      td {
+        padding: 0.7em;
+
+        &.title {
+          font-weight: bold;
+        }
+
+        &.description {
+          
+        }
+
+        &.state {
+          color: white;
+          border-radius: 0.5em;
+
+          &.ok {
+            background-color: @colorOk;
+          }
+
+          &.warning {
+            background-color: @colorWarning;
+          }
+
+          &.critical {
+            background-color: @colorCritical;
+          }
+        }
+      }
+    }
+  }
+}
