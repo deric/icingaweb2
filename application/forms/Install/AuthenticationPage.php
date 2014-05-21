@@ -28,10 +28,15 @@
  */
 use Icinga\Web\Wizard\Page;
 
+use Icinga\Form\Config\Resource\ResourceBaseForm;
+use Icinga\Form\Config\ResourceForm;
+use Icinga\Protocol\Ldap\Connection;
 use Zend_Form;
 use Icinga\Form\Config\Resource\DbResourceForm;
 use Icinga\Form\Config\Resource\LdapResourceForm;
 use Zend_Config;
+use Zend_Validate_Ip;
+use Zend_Validate_Hostname;
 use Icinga\Web\Form;
 
 /**
@@ -57,7 +62,7 @@ class AuthenticationPage extends Page
     /**
      * The sub form used to configure the resource.
      *
-     * @var Zend_Form
+     * @var ResourceBaseForm
      */
     private $resourceForm = null;
 
@@ -107,89 +112,122 @@ class AuthenticationPage extends Page
             )
         );
         $this->enableAutoSubmit(array('authentication_mode'));
+
+        // TODO: Will only work when next was clicked at least once.
         switch ($this->getRequest()->getParam('authentication_mode', self::AUTHENTICATION_MODE_DATABASE)) {
             case self::AUTHENTICATION_MODE_DATABASE:
                 $this->setResourceSubForm(new DbResourceForm());
                 break;
             case self::AUTHENTICATION_MODE_LDAP:
-                $this->setResourceSubForm(new LdapResourceForm());
+                $this->addElement(
+                    'text',
+                    'ldap_hostname_discover',
+                    array(
+                        'required' => true,
+                        'label'    => t('Discover AD/LDAP Server'),
+                        'helptext' => t('Enter the hostname, IP or domain of the AD/LDAP server and press "Check".')
+                    )
+                );
+                $hostname = $this->getRequest()->getParam('ldap_hostname_discover');
+
+                // check hostname
+                $ip = new Zend_Validate_Ip();
+                $domain = new Zend_Validate_Hostname();
+                if (isset($hostname) && $domain->isValid($hostname)) {
+                    // Try to discover servers
+                    $connections = Connection::discoverServerlistForDomain($hostname);
+                    if (count($connections) > 0) {
+                        array_unshift($connections, '');
+                        $this->addHostSelectBox($connections, count($connections) - 1);
+                    } else {
+                        $this->addErrorMessage(t('No Servers found on this domain.'));
+                    }
+                } else if (isset($hostname) && $ip->isValid($hostname)) {
+                    $this->addHostSelectBox(array($hostname), 1);
+                    $this->addLdapResourceForm();
+                } else {
+                    $this->addCheckButton();
+                }
+                if ($this->getRequest()->getParam('ldap_hostname') !== NULL) {
+                    $this->addLdapResourceForm();
+                }
                 break;
             case self::AUTHENTICATION_MODE_EXTERNAL:
                 // TODO: external subform
                 break;
         }
+    }
 
-        /*
+    private function addLdapResourceForm()
+    {
+        $hostname = $this->getElement('ldap_hostname')->getValue();
+        if ($hostname === '') {
+            return;
+        }
+
+        $form = new LdapResourceForm();
+        $form->setResource(new Zend_Config(array()));
+        $form->buildForm();
+        $form->setDefault('resource_ldap_hostname', $hostname);
+        $form->getElement('resource_ldap_hostname')->setValue($hostname);
+        $this->setResourceSubForm($form);
+
+        // TODO: Get credentials form input.
+        $this->discoverCapabilities(array(
+            'hostname' => $hostname,
+            'port'     => '636',
+            'bind_dn'  => 'DC=int,DC=netways,DC=de',
+            'root_dn'  => 'DC=int,DC=netways,DC=de',
+            'bind_pw'  => 'passwort'
+        ));
+    }
+
+    private function discoverCapabilities($config)
+    {
+        $conn = new Connection(new Zend_Config($config));
+        var_dump($conn->getDefaultNamingContext());
+        var_dump($conn->namingContexts());
+    }
+
+    private function addHostSelectBox($connections, $count)
+    {
         $this->addElement(
-            'text',
-            'backend_name',
+            'select',
+            'ldap_hostname',
             array(
-                'required'  => true,
-                'label'     => t('Authentication Backend Name'),
-                'helptext'  => t('Provide an unique name, used to identify the new authentication backend.'),
-                'value'     => 'auth_backend'
+                'required'     => true,
+                'label'        => t('Available Hosts'),
+                'helptext'     => sprintf(t('We have discovered %d AD or LDAP servers. Choose one from this list.'), $count),
+                'multiOptions' => $connections
             )
         );
-
-        if ($this->getRequest()->getParam('resource_type', 'db') === 'ldap') {
-            $this->addElement(
-                'text',
-                'backend_ldap_user_class',
-                array(
-                    'required'  => true,
-                    'label'     => t('LDAP User Object Class'),
-                    'helptext'  => t('The object class used for storing users on the ldap server'),
-                    'value'     => 'inetOrgPerson'
-                )
-            );
-            $this->addElement(
-                'text',
-                'backend_ldap_user_name_attribute',
-                array(
-                    'required'  => true,
-                    'label'     => t('LDAP User Name Attribute'),
-                    'helptext'  => t('The attribute name used for storing the user name on the ldap server'),
-                    'value'     => 'uid'
-                )
-            );
-        }
-        switch ($this->getRequest()->getParam('authentication_mode', self::AUTHENTICATION_MODE_DATABASE)) {
-            case self::AUTHENTICATION_MODE_DATABASE:
-
-                break;
-            case self::AUTHENTICATION_MODE_LDAP:
-                break;
-
-            case self::AUTHENTICATION_MODE_EXTERNAL:
-                // TODO: Extended configuration to change the value of REMOTE_USER, to be able to
-                // remove the current realm, when using Kerberos authentication.
-                break;
-        }
-
-        /*
-            $this->addErrorMessage(
-                t(
-                    'No users available in the given LDAP backend, installation not possible.'
-                    . ' Change the used backend configuration in the page "configuration" or add at'
-                    . ' least one user to your ldap backend.'
-                )
-            );
-        */
+        $this->enableAutoSubmit(array('ldap_hostname'));
     }
 
-    private function setBackendSubForm(Zend_Form $form)
+    private function addCheckButton()
     {
-        // set resource to name of current resource form.
-
-    }
-
-    private function setResourceSubForm(Zend_Form $form)
-    {
-        $form->setResource(
-            $this->getConfig()->get('resource', new Zend_Config(array()))
+        $this->addElement(
+            'button',
+            'btn_submit',
+            array(
+                'type'   => 'submit',
+                'escape' => false,
+                'value'  => '1',
+                'label'  => $this->getView()->icon('refresh.png', 'Check')
+                    . ' Check',
+            )
         );
-        $this->resourceForm = $form;
+    }
+
+    private function setResourceSubForm(ResourceBaseForm $form)
+    {
+        $form->setResource($this->getConfig()->get(
+            'resource',
+            new Zend_Config(array()))
+        );
+        $form->buildForm();
         $this->addSubForm($form, 'resource');
+        $this->resourceForm = $form;
     }
 
     /**
@@ -206,8 +244,23 @@ class AuthenticationPage extends Page
                 $data[$key] = $element->getValue();
             }
         }
-        return parent::isValid($data);
-    }
+        if (!parent::isValid($data)) {
+            return false;
+        }
+        if (!$this->resourceForm->isValidResource()) {
+            $this->addErrorMessages($this->resourceForm->getErrorMessages());
+            return false;
+        }
+        switch ($this->getRequest()->getParam('authentication_mode')) {
+            case self::AUTHENTICATION_MODE_DATABASE:
+                // TODO: Check if database and test if it is writable. If no database exists skip.
+                break;
+            case self::AUTHENTICATION_MODE_LDAP:
+                // TODO: Check if there are any users in the ldap backend, if there arent any, skip.
+                break;
+        }
+        return true;
+     }
 
     /**
      * Return a Zend_Config object containing the state defined in this form
@@ -216,35 +269,13 @@ class AuthenticationPage extends Page
      */
     public function getConfig()
     {
-        $values = $this->getValues();
-        $config = array();
+        $config = $this->getValues();
         if (isset($this->resourceForm)) {
             $config['resource'] = $this->resourceForm->getConfig();
         }
         if (isset($this->backendForm)) {
             $config['backend'] = $this->backendForm->getConfig();
         }
-        /*
-        if ($this->getRequest()->getParam('resource_e', 'db') === 'ldap') {
-            $authBackendConf = array(
-                'backend'             => 'ldap',
-                'target'              => 'user',
-                'resource'            => $this->authenticationResourceForm->getName(),
-                'user_class'          => $values['backend_ldap_user_class'],
-                'user_name_attribute' => $values['backend_ldap_user_name_attribute']
-            );
-        } else if ($this->getRequest()->getParam('resource_type', 'db') === 'db') {
-            $authBackendConf = array(
-                'backend'             => 'db',
-                'target'              => 'user',
-                'resource'            => $this->authenticationResourceForm->getName(),
-                'user_class'          => $values['backend_ldap_user_class'],
-                'user_name_attribute' => $values['backend_ldap_user_name_attribute']
-            );
-        } else {
-
-        }I
-        */
         return new Zend_Config($config);
     }
 }

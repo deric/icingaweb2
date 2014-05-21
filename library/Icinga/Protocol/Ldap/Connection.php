@@ -353,10 +353,18 @@ class Connection
         return $dir;
     }
 
-    protected function discoverServerlistForDomain($domain)
+    public static function discoverServerlistForDomain($domain)
     {
+        $domains = array();
         $ldaps_records = dns_get_record('_ldaps._tcp.' . $domain, DNS_SRV);
+        foreach ($ldaps_records as $record) {
+            $domains[$record['target']] = true;
+        }
         $ldap_records  = dns_get_record('_ldap._tcp.' . $domain, DNS_SRV);
+        foreach ($ldap_records as $record) {
+            $domains[$record['target']] = true;
+        }
+        return array_keys($domains);
     }
 
     protected function prepareNewConnection()
@@ -433,6 +441,28 @@ class Connection
                 throw new Exception('putenv failed');
             }
         }
+    }
+
+    public function getDefaultNamingContext()
+    {
+        $cap = $this->discoverCapabilities($this->root_dn);
+        if (isset($cap['defaultNamingContext'])) {
+            return $cap['defaultNamingContext'];
+        }
+        $namingContexts = $this->namingContexts();
+        return empty($namingContexts) ? null : $namingContexts[0];
+    }
+
+    public function namingContexts()
+    {
+        $cap = $this->discoverCapabilities($this->root_dn);
+        if (!isset($cap['namingcontexts'])) {
+            return array();
+        }
+        if (!is_array($cap['namingcontexts'])) {
+            return array($cap['namingcontexts']);
+        }
+        return $cap['namingcontexts'];
     }
 
     protected function discoverCapabilities($ds)
