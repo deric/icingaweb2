@@ -32,6 +32,7 @@ namespace Icinga\Form\Config\Resource;
 use Icinga\Data\ResourceFactory;
 use Icinga\Web\Form;
 use Zend_Config;
+use Exception;
 
 class ResourceBaseForm extends Form {
 
@@ -75,6 +76,17 @@ class ResourceBaseForm extends Form {
         return new Zend_Config($result);
     }
 
+    public function isValid($data)
+    {
+        foreach ($this->getElements() as $key => $element) {
+            // Initialize all empty elements with their default values.
+            if (!isset($data[$key])) {
+                $data[$key] = $element->getValue();
+            }
+        }
+        return parent::isValid($data);
+    }
+
     /**
      * Return if this resource is usable by icingaweb
      *
@@ -82,8 +94,8 @@ class ResourceBaseForm extends Form {
      *
      * @return bool
      */
-    public function isValidResource($data) {
-        $config = $this->createConfig($data);
+    public function isValidResource() {
+        $config = $this->getConfig();
         try {
             $resource = ResourceFactory::createResource($config);
             $resource->connect();

@@ -273,6 +273,7 @@ class ResourceForm extends Form
         if (isset($data['resource_force_creation']) && $data['resource_force_creation']) {
             return true;
         }
+        var_dump($data);
         if ($data['resource_type_old'] === $data['resource_type']) {
             if (!$this->isValidResource($data)) {
                 $this->addForceCreationCheckbox();
@@ -295,8 +296,7 @@ class ResourceForm extends Form
      */
     public function isValidResource()
     {
-        $data = $this->getValues();
-        $valid = $this->resourceSubForm->isValidResource($data);
+        $valid = $this->resourceSubForm->isValidResource();
         $this->addErrorMessages($this->resourceSubForm->getErrorMessages());
         return $valid;
     }

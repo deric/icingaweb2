@@ -33,6 +33,7 @@ namespace Icinga\Form\Config\Resource;
 use Exception;
 use Icinga\Web\Form;
 use Zend_Config;
+use Icinga\Data\ResourceFactory;
 
 /**
  * Contains the properties needed to create a basic LDAP resource.

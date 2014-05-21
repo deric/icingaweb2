@@ -134,10 +134,10 @@ class DbResourceForm extends ResourceBaseForm {
      *
      * @return bool
      */
-    public function isValidResource($data)
+    public function isValidResource()
     {
         try {
-            $config = $this->createConfig($data);
+            $config = $this->getConfig();
             /*
              * It should be possible to run icingaweb without the pgsql or mysql extension or Zend-Pdo-Classes,
              * in case they aren't actually used. When the user tries to create a resource that depends on an
@@ -164,5 +164,6 @@ class DbResourceForm extends ResourceBaseForm {
             $this->addErrorMessage(t('Connectivity validation failed, connection to the given resource not possible.'));
             return false;
         }
+        return true;
     }
 } 

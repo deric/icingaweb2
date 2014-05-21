@@ -30,6 +30,7 @@
 namespace Icinga\Form\Config\Resource;
 
 use Icinga\Web\Form;
+use Zend_Config;
 
 /**
  * Contains the properties needed to create a basic LDAP resource.

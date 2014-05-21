@@ -72,6 +72,7 @@ class StatusdatResourceForm extends ResourceBaseForm {
             );
             return false;
         }
+        return true;
     }
 
     public function getConfig()
