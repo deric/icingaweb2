@@ -442,7 +442,7 @@ class ConfigController extends BaseConfigController
             if ($oldName !== $name) {
                 unset($resources->{$oldName});
             }
-            $resources->{$name} = $form->getConfig();
+            $resources->$name = $form->getConfig();
             if ($this->writeConfigFile($resources, 'resources')) {
                 $this->addSuccessMessage('Resource "' . $name . '" edited.');
                 $this->redirectNow("config/resource");

@@ -1,51 +1,42 @@
 <?php
+// {{{ICINGA_LICENSE_HEADER}}}
 /**
- * Created by PhpStorm.
- * User: mjentsch
- * Date: 19.05.14
- * Time: 17:22
+ * This file is part of Icinga Web 2.
+ *
+ * Icinga Web 2 - Head for multiple monitoring backends.
+ * Copyright (C) 2013 Icinga Development Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * @copyright  2013 Icinga Development Team <info@icinga.org>
+ * @license    http://www.gnu.org/licenses/gpl-2.0.txt GPL, version 2
+ * @author     Icinga Development Team <info@icinga.org>
+ *
  */
+// {{{ICINGA_LICENSE_HEADER}}}
+
 
 namespace Icinga\Form\Config\Resource;
 
-use Exception;
 use Icinga\Web\Form;
 use Zend_Config;
 
 /**
  * Contains the properties needed to create a basic LDAP resource.
  */
-class LdapResourceForm extends Form {
-
-    private $resource = null;
-
-    /**
-     * Set the resource configuration to edit.
-     *
-     * @param   Zend_Config     $resource   The config to set
-     */
-    public function setResource(Zend_Config $resource)
-    {
-        $this->resource = $resource;
-    }
-
-    public function getResource()
-    {
-        return $this->resource;
-    }
-
-    public function getConfig()
-    {
-        $values = $this->getValues();
-        $result = array();
-        foreach ($values as $key => $value) {
-            $configKey = explode('_', $key, 3);
-            if (count($configKey) === 3) {
-                $result[$configKey[2]] = $value;
-            }
-        }
-        return new Zend_Config($result);
-    }
+class LdapResourceForm extends ResourceBaseForm {
 
     public function create() {
         $this->addElement(
@@ -95,21 +86,15 @@ class LdapResourceForm extends Form {
         );
     }
 
-    /**
-     * Test if this is a valid resource.
-     *
-     * @return bool
-     */
-    public function isValidResource()
+    public function getConfig()
     {
-        $config = $this->getConfig();
-        try {
-            $resource = ResourceFactory::createResource($config);
-            $resource->connect();
-        } catch (Exception $e) {
-            $this->addErrorMessage(t('Connectivity validation failed, connection to the given resource not possible.'));
-            return false;
-        }
-        return true;
+        $values = $this->getValues();
+        return new Zend_Config(array(
+            'type'     => 'ldap',
+            'hostname' => $values['resource_ldap_hostname'],
+            'root_dn'  => $values['resource_ldap_root_dn'],
+            'bind_dn'  => $values['resource_ldap_bind_dn'],
+            'bind_pw'  => $values['resource_ldap_bind_pw']
+         ));
     }
 } 

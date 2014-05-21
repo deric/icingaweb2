@@ -35,6 +35,7 @@ class InstallController extends ActionController
         $wizard = $this->createWizard();
 
         if ($wizard->isSubmittedAndValid()) {
+            var_dump($wizard->getValues());
             $wizard->navigate();
             if ($wizard->isFinished()) {
                 // TODO: Run the installer (Who creates an installer? How do we handle module installers?)

@@ -29,13 +29,15 @@
 
 namespace Icinga\Form\Config;
 
-use Exception;
 use Icinga\Form\Config\Resource\DbResourceForm;
+use Icinga\Form\Config\Resource\FileResourceForm;
 use Icinga\Form\Config\Resource\LdapResourceForm;
+use Icinga\Form\Config\Resource\LivestatusResourceForm;
+use Icinga\Form\Config\Resource\ResourceBaseForm;
+use Icinga\Form\Config\Resource\StatusdatResourceForm;
 use Zend_Config;
 use Zend_Form_Element_Checkbox;
 use Icinga\Web\Form;
-use Icinga\Data\ResourceFactory;
 use Icinga\Web\Form\Decorator\HelpText;
 
 class ResourceForm extends Form
@@ -64,7 +66,7 @@ class ResourceForm extends Form
     /**
      * The subForm for the currently used resource.
      *
-     * @var Zend_Form
+     * @var ResourceBaseForm
      */
     protected $resourceSubForm;
 
@@ -142,82 +144,36 @@ class ResourceForm extends Form
         return $this->resource;
     }
 
-    protected function addDbForm()
+    /**
+     * Create the appropriate resource form for the currently selected resource type.
+     *
+     * @return DbResourceForm|FileResourceForm|LdapResourceForm|LivestatusResourceForm|StatusdatResourceForm
+     */
+    protected function createResourceForm()
     {
-        $dbResource = new DbResourceForm();
-        $dbResource->setResource($this->getResource());
-        $this->addSubForm($dbResource, 'db_resource');
-    }
+        switch ($this->getRequest()->getParam('resource_type', $this->getResource()->type)) {
+            case 'db':
+                $resource = new DbResourceForm();
+                break;
+            case 'statusdat':
+                $resource = new StatusdatResourceForm();
+                break;
+            case 'livestatus':
+                $resource = new LivestatusResourceForm();
+                break;
+            case 'ldap':
+                $resource = new LdapResourceForm();
+                break;
+            case 'file':
+                $resource = new FileResourceForm();
+                break;
+        }
+        $resource->setResource($this->getResource());
 
-    protected function addStatusdatForm()
-    {
-        $this->addElement(
-            'text',
-            'resource_statusdat_status_file',
-            array(
-                'required'  => true,
-                'label'     => t('Filepath'),
-                'helptext'  => t('Location of your icinga status.dat file'),
-                'value'     => $this->getResource()->get('status_file', '/usr/local/icinga/var/status.dat')
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_statusdat_object_file',
-            array(
-                'required'  => true,
-                'label'     => t('Filepath'),
-                'helptext'  => t('Location of your icinga objects.cache file'),
-                'value'     => $this->getResource()->get('status_file', '/usr/local/icinga/var/objects.cache')
-            )
-        );
-    }
-
-    protected function addLivestatusForm()
-    {
-        $this->addElement(
-            'text',
-            'resource_livestatus_socket',
-            array(
-                'required'  => true,
-                'label'     => t('Socket'),
-                'helptext'  => t('The path to your livestatus socket used for querying monitoring data'),
-                'value'     => $this->getResource()->get('socket', '/usr/local/icinga/var/rw/livestatus')
-            )
-        );
-    }
-
-    protected function addLdapForm()
-    {
-        $ldapResource = new LdapResourceForm();
-        $ldapResource->setResource($this->getResource());
-        $this->addSubForm($ldapResource, 'ldap_resource');
-    }
-
-    protected function addFileForm()
-    {
-        $this->addElement(
-            'text',
-            'resource_file_filename',
-            array(
-                'required'  => true,
-                'label'     => t('Filepath'),
-                'helptext'  => t('The filename to fetch information from'),
-                'value'     => $this->getResource()->get('filename', '')
-            )
-        );
-
-        $this->addElement(
-            'text',
-            'resource_file_fields',
-            array(
-                'required'  => true,
-                'label'     => t('Pattern'),
-                'helptext'  => t('The regular expression by which to identify columns'),
-                'value'     => $this->getResource()->get('fields', '')
-            )
-        );
+        // no CSRF-token on subforms.
+        $resource->setTokenDisabled();
+        $resource->buildForm();
+        return $resource;
     }
 
     protected function addNameFields()
@@ -271,7 +227,7 @@ class ResourceForm extends Form
                 'required'      => true,
                 'label'         => t('Resource Type'),
                 'helptext'      => t('The type of resource'),
-                'value'         => $this->getResource()->type,
+                'value'         => $this->getRequest()->getParam('resource_type', $this->getResource()->type),
                 'multiOptions'  => array(
                     'db'            => t('SQL Database'),
                     'ldap'          => 'LDAP',
@@ -282,6 +238,15 @@ class ResourceForm extends Form
             )
         );
         $this->enableAutoSubmit(array('resource_type'));
+
+        $this->addElement(
+            'hidden',
+            'resource_type_old',
+            array(
+                'required' => true,
+                'value' => $this->getRequest()->getParam('resource_type', $this->getResource()->type)
+            )
+        );
     }
 
     /**
@@ -296,90 +261,66 @@ class ResourceForm extends Form
      */
     public function isValid($data)
     {
+        foreach ($this->getElements() as $key => $element) {
+            // Initialize all empty elements with their default values.
+            if (!isset($data[$key])) {
+                $data[$key] = $element->getValue();
+            }
+        }
         if (!parent::isValid($data)) {
             return false;
         }
         if (isset($data['resource_force_creation']) && $data['resource_force_creation']) {
             return true;
         }
-        if (!$this->isValidResource()) {
-            $this->addForceCreationCheckbox();
+        if ($data['resource_type_old'] === $data['resource_type']) {
+            if (!$this->isValidResource($data)) {
+                $this->addForceCreationCheckbox();
+                return false;
+            }
+            return true;
+        } else {
+            $this->getElement('resource_type_old')->setValue($this->getRequest()->getParam('resource_type'));
             return false;
         }
-        return true;
     }
 
     /**
-     * Test if the changed resource is a valid resource, by instantiating it and
-     * checking if a connection is possible
+     * Test if the changed resource is a valid resource
+     *
+     * Calls the resource forms isValidResource() function, which in turn starts
+     * resource-specific connectivity tests, to determine if this resource is usable.
      *
      * @return  bool    True when a connection to the resource is possible
      */
     public function isValidResource()
     {
-        return $this->resourceSubForm->isValidResource();
-
-        // TODO: Find a way to handle this properly.
-        try {
-            switch ($config->type) {
-                case 'db':
-                    // TODO:
-                case 'statusdat':
-                    if (!file_exists($config->object_file) || !file_exists($config->status_file)) {
-                        $this->addErrorMessage(
-                            t('Connectivity validation failed, the provided file does not exist.')
-                        );
-                        return false;
-                    }
-                    break;
-                case 'livestatus':
-                    $resource = ResourceFactory::createResource($config);
-                    $resource->connect()->disconnect();
-                    break;
-                case 'ldap':
-
-                    break;
-                case 'file':
-                    if (!file_exists($config->filename)) {
-                        $this->addErrorMessage(
-                            t('Connectivity validation failed, the provided file does not exist.')
-                        );
-                        return false;
-                    }
-                    break;
-            }
-        } catch (Exception $e) {
-            $this->addErrorMessage();
-            return false;
-        }
-
-        return true;
+        $data = $this->getValues();
+        $valid = $this->resourceSubForm->isValidResource($data);
+        $this->addErrorMessages($this->resourceSubForm->getErrorMessages());
+        return $valid;
     }
 
+    /**
+     * Populate the form with all Zend_Form_Elements
+     */
     public function create()
     {
         $this->addNameFields();
         $this->addTypeSelectionBox();
-
-        switch ($this->getRequest()->getParam('resource_type', $this->getResource()->type)) {
-            case 'db':
-                $this->addDbForm();
-                break;
-            case 'statusdat':
-                $this->addStatusdatForm();
-                break;
-            case 'livestatus':
-                $this->addLivestatusForm();
-                break;
-            case 'ldap':
-                $this->addLdapForm();
-                break;
-            case 'file':
-                $this->addFileForm();
-                break;
-        }
-
-        $this->setSubmitLabel('{{SAVE_ICON}} Save Changes');
+        $this->resourceSubForm = $this->createResourceForm();
+        $this->addSubForm($this->resourceSubForm, 'subform_resource');
+        $this->addElement(
+            'button',
+            'btn_submit',
+            array(
+                'type'   => 'submit',
+                'escape' => false,
+                'value'  => '1',
+                'label'  => $this->getView()->icon('save.png', 'Save Changes')
+                    . ' Save changes',
+            )
+        );
     }
 
     /**
@@ -390,21 +331,8 @@ class ResourceForm extends Form
     public function getConfig()
     {
         $values = $this->getValues();
-
-        $result = array();
-        if (array_key_exists('resource_type', $values)) {
-            $result['type'] = $values['resource_type'];
-        }
-
-        foreach ($values as $key => $value) {
-            if ($key !== 'resource_type' && $key !== 'resource_all_name' && $key !== 'resource_all_name_old') {
-                $configKey = explode('_', $key, 3);
-                if (count($configKey) === 3) {
-                    $result[$configKey[2]] = $value;
-                }
-            }
-        }
-
+        $result = $this->resourceSubForm->getConfig()->toArray();
+        $result['type'] = $values['resource_type'];
         return new Zend_Config($result);
     }
 }
