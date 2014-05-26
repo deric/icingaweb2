@@ -273,7 +273,6 @@ class ResourceForm extends Form
         if (isset($data['resource_force_creation']) && $data['resource_force_creation']) {
             return true;
         }
-        var_dump($data);
         if ($data['resource_type_old'] === $data['resource_type']) {
             if (!$this->isValidResource($data)) {
                 $this->addForceCreationCheckbox();

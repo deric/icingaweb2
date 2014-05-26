@@ -28,7 +28,10 @@
  */
 use Icinga\Web\Wizard\Page;
 
+use Icinga\Data\ResourceFactory;
+use Icinga\Form\Config\Authentication\LdapBackendForm;
 use Icinga\Form\Config\Resource\ResourceBaseForm;
+use Icinga\Form\Config\Authentication\BaseBackendForm;
 use Icinga\Form\Config\ResourceForm;
 use Icinga\Protocol\Ldap\Connection;
 use Zend_Form;
@@ -69,6 +72,13 @@ class AuthenticationPage extends Page
     /**
      * The sub form used to configure the authentication backend.
      *
+     * @var BaseBackendForm
+     */
+    private $authForm = null;
+
+    /**
+     * The sub form used to configure the authentication backend.
+     *
      * @var Zend_Form
      */
     private $backendForm = null;
@@ -96,6 +106,16 @@ class AuthenticationPage extends Page
      */
     public function create()
     {
+        $this->addElement(
+            'text',
+            'resource_name',
+            array(
+                'required' => true,
+                'label'    => t('Resource Name'),
+                'helptext' => t('Specify the name of the new resource.')
+            )
+        );
+
         $this->addElement(
             'select',
             'authentication_mode',
@@ -137,19 +157,17 @@ class AuthenticationPage extends Page
                     // Try to discover servers
                     $connections = Connection::discoverServerlistForDomain($hostname);
                     if (count($connections) > 0) {
-                        array_unshift($connections, '');
-                        $this->addHostSelectBox($connections, count($connections) - 1);
+                        foreach ($connections as $connection) {
+                            // TODO: Check Connections
+                        }
+                        $this->addLdapResourceForm($hostname, $this->getRequest()->getParam('resource_name'));
                     } else {
                         $this->addErrorMessage(t('No Servers found on this domain.'));
                     }
                 } else if (isset($hostname) && $ip->isValid($hostname)) {
-                    $this->addHostSelectBox(array($hostname), 1);
-                    $this->addLdapResourceForm();
+                    $this->addLdapResourceForm($hostname, $this->getRequest()->getParam('resource_name'));
                 } else {
                     $this->addCheckButton();
-                }
-                if ($this->getRequest()->getParam('ldap_hostname') !== NULL) {
-                    $this->addLdapResourceForm();
                 }
                 break;
             case self::AUTHENTICATION_MODE_EXTERNAL:
@@ -158,13 +176,8 @@ class AuthenticationPage extends Page
         }
     }
 
-    private function addLdapResourceForm()
+    private function addLdapResourceForm($hostname, $resourceName)
     {
-        $hostname = $this->getElement('ldap_hostname')->getValue();
-        if ($hostname === '') {
-            return;
-        }
-
         $form = new LdapResourceForm();
         $form->setResource(new Zend_Config(array()));
         $form->buildForm();
@@ -172,21 +185,47 @@ class AuthenticationPage extends Page
         $form->getElement('resource_ldap_hostname')->setValue($hostname);
         $this->setResourceSubForm($form);
 
-        // TODO: Get credentials form input.
-        $this->discoverCapabilities(array(
-            'hostname' => $hostname,
-            'port'     => '636',
-            'bind_dn'  => 'DC=int,DC=netways,DC=de',
-            'root_dn'  => 'DC=int,DC=netways,DC=de',
-            'bind_pw'  => 'passwort'
-        ));
+        $this->addLdapBackendForm($hostname, $form);
     }
 
-    private function discoverCapabilities($config)
+    private function addLdapBackendForm($hostname, $resourceForm)
     {
-        $conn = new Connection(new Zend_Config($config));
-        var_dump($conn->getDefaultNamingContext());
-        var_dump($conn->namingContexts());
+        $name = 'ldap_authentication';
+
+        $form = new LdapBackendForm();
+        $form->setBackendName($name);
+        $config = $this->getConfig()->get('backend', new Zend_Config(array()));
+        $form->setBackend($config);
+        $form->buildForm();
+
+        $form->getElement('backend_' . $name . '_resource')
+            ->setValue($this->getElement('resource_name')->getValue());
+
+        $form->removeElement('backend_' . $name . '_resource');
+
+        // TODO: Get credentials form input.
+        $cap = $this->discoverCapabilities($hostname);
+        if ($cap->msCapabilities->ActiveDirectoryOid) {
+            // Host is an ActiveDirectory server
+            if (isset($cap->defaultNamingContext)) {
+                $resourceForm->setDefault('resource_ldap_root_dn', $cap->defaultNamingContext);
+                $resourceForm->getElement('resource_ldap_root_dn')->setValue($cap->defaultNamingContext);
+            }
+            $form->setDefault('backend_' . $name . '_user_name_attribute', 'sAMAccountName');
+            $form->getElement('backend_' . $name . '_user_name_attribute')->setValue('sAMAccountName');
+            $form->setDefault('backend_' . $name . '_user_class', 'user');
+            $form->getElement('backend_' . $name . '_user_class')->setValue('user');
+        }
+        $this->setAuthSubForm($form);
+    }
+
+    private function discoverCapabilities($hostname)
+    {
+        $conn = new Connection(
+            new Zend_Config(array('hostname' => $hostname))
+        );
+        $conn->connect();
+        return $conn->getCapabilities();
     }
 
     private function addHostSelectBox($connections, $count)
@@ -221,13 +260,17 @@ class AuthenticationPage extends Page
 
     private function setResourceSubForm(ResourceBaseForm $form)
     {
-        $form->setResource($this->getConfig()->get(
-            'resource',
-            new Zend_Config(array()))
-        );
+        $config = $this->getConfig()->get('resource', new Zend_Config(array()));
+        $form->setResource($config);
         $form->buildForm();
         $this->addSubForm($form, 'resource');
         $this->resourceForm = $form;
+    }
+
+    private function setAuthSubForm(BaseBackendForm $form)
+    {
+        $this->addSubForm($form, 'backend');
+        return $form;
     }
 
     /**

@@ -63,6 +63,7 @@ class Connection
     protected $bind_pw;
     protected $root_dn;
     protected $count;
+
     protected $ldap_extension = array(
         '1.3.6.1.4.1.1466.20037' => 'STARTTLS',
         // '1.3.6.1.4.1.4203.1.11.1' => '11.1', // PASSWORD_MODIFY
@@ -108,6 +109,8 @@ class Connection
 
     protected $supports_v3  = false;
     protected $supports_tls = false;
+
+    protected $capabilities;
 
     /**
      * Constructor
@@ -367,6 +370,7 @@ class Connection
         return array_keys($domains);
     }
 
+
     protected function prepareNewConnection()
     {
         $use_tls = false;
@@ -379,6 +383,7 @@ class Connection
 
         $ds = ldap_connect($this->hostname, $this->port);
         $cap = $this->discoverCapabilities($ds);
+        $this->capabilities = $cap;
 
         if ($use_tls) {
             if ($cap->starttls) {
@@ -413,7 +418,6 @@ class Connection
 
             // TODO: remove this -> FORCING v3 for now
             ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3);
-
             Logger::warning('No LDAPv3 support detected');
         }
 
@@ -443,26 +447,96 @@ class Connection
         }
     }
 
-    public function getDefaultNamingContext()
+    public function hasCapabilityStarTSL($cap)
     {
-        $cap = $this->discoverCapabilities($this->root_dn);
-        if (isset($cap['defaultNamingContext'])) {
-            return $cap['defaultNamingContext'];
+        $cap = $this->getExtensionCapabilities($cap);
+        return isset($cap['1.3.6.1.4.1.1466.20037']);
+    }
+
+    public function hasCapabilityLdapV3($cap)
+    {
+        if ((is_string($cap->supportedLDAPVersion)
+                && (int) $cap->supportedLDAPVersion === 3)
+            || (is_array($cap->supportedLDAPVersion)
+                && in_array(3, $cap->supportedLDAPVersion)
+            )) {
+            return true;
         }
-        $namingContexts = $this->namingContexts();
+        return false;
+    }
+
+    public function getExtensionCapabilities($cap)
+    {
+        $extensions = array();
+        if (isset($cap->supportedExtension)) {
+            foreach ($cap->supportedExtension as $oid) {
+                if (array_key_exists($oid, $this->ldap_extension)) {
+                    if ($this->ldap_extension[$oid] === 'STARTTLS') {
+                        $extensions['1.3.6.1.4.1.1466.20037'] = $this->ldap_extension['1.3.6.1.4.1.1466.20037'];
+                    }
+                }
+            }
+        }
+        return $extensions;
+    }
+
+    public function getMsCapabilities($cap)
+    {
+        $ms = array();
+        foreach ($this->ms_capability as $name) {
+            $ms[$this->convName($name)] = false;
+        }
+
+        if (isset($cap->supportedCapabilities)) {
+            foreach ($cap->supportedCapabilities as $oid) {
+                if (array_key_exists($oid, $this->ms_capability)) {
+                    $ms[$this->convName($this->ms_capability[$oid])] = true;
+                    // echo $this->ms_capability[$oid] . "\n";
+                    // $ms[$oid] = $this->ms_capability[$oid];
+                }
+            }
+        }
+        return (object)$ms;
+    }
+
+    private function convName($name)
+    {
+        $parts = explode('_', $name);
+        foreach ($parts as $i => $part) {
+            $parts[$i] = ucfirst(strtolower($part));
+        }
+        return implode('', $parts);
+    }
+
+    public function getCapabilities()
+    {
+        return $this->capabilities;
+    }
+
+    public function getDefaultNamingContext($cap = null)
+    {
+        if (!isset($cap)) {
+            $cap = $this->capabilities;
+        }
+        if (isset($cap->defaultNamingContext)) {
+            return $cap->defaultNamingContext;
+        }
+        $namingContexts = $this->namingContexts($cap);
         return empty($namingContexts) ? null : $namingContexts[0];
     }
 
-    public function namingContexts()
+    public function namingContexts($cap = null)
     {
-        $cap = $this->discoverCapabilities($this->root_dn);
-        if (!isset($cap['namingcontexts'])) {
+        if (!isset($cap)) {
+            $cap = $this->capabilities;
+        }
+        if (!isset($cap->namingContexts)) {
             return array();
         }
-        if (!is_array($cap['namingcontexts'])) {
-            return array($cap['namingcontexts']);
+        if (!is_array($cap->namingContexts)) {
+            return array($cap->namingContexts);
         }
-        return $cap['namingcontexts'];
+        return $cap->namingContexts;
     }
 
     protected function discoverCapabilities($ds)
@@ -507,69 +581,51 @@ class Connection
         $cap = (object) array(
             'ldapv3'   => false,
             'starttls' => false,
+            'msCapabilities' => array()
         );
 
         if ($entry === false) {
             // TODO: Is it OK to have no capabilities?
-            return $cap;
+            return false;
         }
         $ldapAttributes = ldap_get_attributes($ds, $entry);
-        $result = $this->cleanupAttributes(
-            $ldapAttributes
-        );
+        $result = $this->cleanupAttributes($ldapAttributes);
+        $cap->ldapv3 = $this->hasCapabilityLdapV3($result);
+        $cap->starttls = $this->hasCapabilityStarTSL($result);
+        $cap->msCapabilities = $this->getMsCapabilities($result);
+        $cap->defaultNamingContext = $this->getDefaultNamingContext($result);
+        $cap->namingContexts = $this->namingContexts($result);
+
         /*
         if (isset($result->dnsHostName)) {
             ldap_set_option($ds, LDAP_OPT_HOST_NAME, $result->dnsHostName);
         }
         */
 
-        if ((is_string($result->supportedLDAPVersion)
-            && (int) $result->supportedLDAPVersion === 3)
-            || (is_array($result->supportedLDAPVersion)
-              && in_array(3, $result->supportedLDAPVersion)
-        )) {
-            $cap->ldapv3 = true;
-        }
-
-        if (isset($result->supportedCapabilities)) {
-            foreach ($result->supportedCapabilities as $oid) {
-                if (array_key_exists($oid, $this->ms_capability)) {
-                    // echo $this->ms_capability[$oid] . "\n";
-                }
-            }
-        }
-        if (isset($result->supportedExtension)) {
-            foreach ($result->supportedExtension as $oid) {
-                if (array_key_exists($oid, $this->ldap_extension)) {
-                    if ($this->ldap_extension[$oid] === 'STARTTLS') {
-                        $cap->starttls = true;
-                    }
-                }
-            }
-        }
         return $cap;
     }
 
-    public function connect()
+    public function connect($anonymous = false)
     {
         if ($this->ds !== null) {
             return;
         }
         $this->ds = $this->prepareNewConnection();
 
-        $r = @ldap_bind($this->ds, $this->bind_dn, $this->bind_pw);
-
-        if (! $r) {
-            throw new \Exception(
-                sprintf(
-                    'LDAP connection to %s:%s (%s / %s) failed: %s',
-                    $this->hostname,
-                    $this->port,
-                    $this->bind_dn,
-                    '***' /* $this->bind_pw */,
-                    ldap_error($this->ds)
-                )
-            );
+        if (!$anonymous) {
+            $r = @ldap_bind($this->ds, $this->bind_dn, $this->bind_pw);
+            if (! $r) {
+                throw new \Exception(
+                    sprintf(
+                        'LDAP connection to %s:%s (%s / %s) failed: %s',
+                        $this->hostname,
+                        $this->port,
+                        $this->bind_dn,
+                        '***' /* $this->bind_pw */,
+                        ldap_error($this->ds)
+                    )
+                );
+            }
         }
     }
 

@@ -126,6 +126,7 @@ class ResourceFactory implements ConfigAwareFactory
                 $resource = new DbConnection($config);
                 break;
             case 'ldap':
+                var_dump($config);
                 $resource = new LdapConnection($config);
                 break;
             case 'statusdat':
