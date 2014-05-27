@@ -1,264 +1,56 @@
 <?php
 // @codeCoverageIgnoreStart
 // {{{ICINGA_LICENSE_HEADER}}}
-/**
- * This file is part of Icinga Web 2.
- *
- * Icinga Web 2 - Head for multiple monitoring backends.
- * Copyright (C) 2013 Icinga Development Team
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- * @copyright  2013 Icinga Development Team <info@icinga.org>
- * @license    http://www.gnu.org/licenses/gpl-2.0.txt GPL, version 2
- * @author     Icinga Development Team <info@icinga.org>
- *
- */
 // {{{ICINGA_LICENSE_HEADER}}}
 
 namespace Icinga\Form\Install;
 
+use Zend_Config;
+use Zend_Validate_Identical;
+use Icinga\Web\Wizard\Page;
+use Icinga\Data\ResourceFactory;
 use Icinga\Authentication\Backend\DbUserBackend;
 use Icinga\Authentication\Backend\LdapUserBackend;
-use Icinga\Authentication\UserBackend;
-use Icinga\Data\ResourceFactory;
-use Icinga\Web\Wizard\Page;
-use Zend_Config;
-use Icinga\Web\Form;
-use Zend_Validate_Identical;
 
-/**
- * Form class for setting the application wide logging configuration
- */
 class AdministrationPage extends Page
 {
     /**
-     * Administration account is authenticated using a database
-     *
-     * Available users can be listed and a new user can be created.
-     */
-    const AUTHENTICATION_MODE_DATABASE = 'database';
-
-    /**
-     * Administration account is authenticated using ldap
-     *
-     * All available users can be listed, a new user cannot be created.
-     */
-    const AUTHENTICATION_MODE_LDAP     = 'ldap';
-
-    /**
-     * Administration account is authenticated using an external authentication backend
-     *
-     * Available users can not be listed and users cannot be created.
-     */
-    const AUTHENTICATION_MODE_EXTERNAL = 'external';
-
-    /**
-     * Defines where the administrative user is authenticated and whether a
-     * new user can be created.
-     *
-     * @var string
-     */
-    private $authenticationMode = self::AUTHENTICATION_MODE_DATABASE;
-
-    /**
-     * The title of this wizard-page.
-     *
-     * @var string
-     */
-    protected $title = '';
-
-    /**
-     * The authentication-backend to use for fetching available users
-     *
-     * @var Zend_Config
-     */
-    private $backendConfiguration = array();
-
-    /**
-     * Contains all available users.
-     *
-     * @var array
-     */
-    private $users;
-
-    /**
-     * Initialise this form.
-     */
-    public function init()
-    {
-        $this->setName('administration');
-        $this->title = t('Administration');
-
-    }
-
-    /**
-     * Fetch all users from the current Backend.
-     */
-    private function getUsersFromBackend()
-    {
-        if (isset($this->users)) {
-            return $this->users;
-        }
-
-        // TODO: Fetch type of backend from authentication-page configuration (refs #6141)
-        $databaseConf = $this->wizard->getConfig()->get('authentication');
-        $this->backendConfiguration = $databaseConf;
-
-        switch ($this->authenticationMode) {
-            case self::AUTHENTICATION_MODE_DATABASE:
-                // TODO: Use backend from Authentication-Page instead (refs #6141)
-                $authBackend = new DbUserBackend(
-                    ResourceFactory::createResource(ResourceFactory::getResourceConfig('internal_db'))
-                );
-                $this->users = $authBackend->getUsers();
-                break;
-
-            case self::AUTHENTICATION_MODE_LDAP:
-                // TODO: Use backend from Authentication-Page instead (refs #6141)
-                // TODO: Use userClass and userNameAttribute from authentication-page configuration refs (#6141)
-                $authBackend = new LdapUserBackend(
-                    ResourceFactory::createResource(ResourceFactory::getResourceConfig('internal_ldap')),
-                    'inetOrgPerson',
-                    'uid'
-                );
-                $this->users = $authBackend->getUsers();
-                break;
-        }
-        return $this->users;
-    }
-
-    /**
-     * Create this administration form.
-     *
-     * @see Form::create()
+     * Create this wizard page
      */
     public function create()
     {
-        $users = $this->getUsersFromBackend();
-        $config = $this->getConfig();
+        $config = $this->getConfiguration();
+        $authConfig = $this->wizard->getPage('authentication')->getConfiguration();
+        // TODO: Use auth configuration from the authentication page (refs #6141)
+        $users = array(); // $this->getUsersFromBackend($authConfig);
 
-        if (empty($users) && $this->authenticationMode === self::AUTHENTICATION_MODE_LDAP) {
-            $this->addErrorMessage(
-                t(
-                    'No users available in the given LDAP backend, installation not possible.'
-                    . ' Change the used backend configuration in the page "configuration" or add at'
-                    . ' least one user to your ldap backend.'
-                )
-            );
-            return;
-        }
-        if ($this->authenticationMode === 'external') {
-            $this->addElement(
-                'text',
-                'external_administrator',
-                array(
-                    'required'  => true,
-                    'label'     => t('Administrator user name.'),
-                    'helptext'  => t('Give administration privileges to this user.'),
-                    'value'     => $config->get('external_administrator', $_SERVER['REMOTE_USER'])
-                )
-            );
+        $this->addNote(t('Please define a user which should be initially equipped with administrative rights.'));
+
+        if ($authConfig->type === 'external') {
+            $this->addExternalUserControls($users);
+        } elseif ($authConfig->type === 'ldap') {
+            $this->addExistingUserControls($users);
+        } elseif (empty($users)) {
+            $this->addNewUserControls();
         } else {
             $this->addElement(
                 'checkbox',
-                'internal_administrator_select_type',
+                'use_existing',
                 array(
                     'required'  => true,
-                    'disableHidden' => true,
-                    'label' => t('Create User?'),
-                    'helptext' => t('You can give administration privileges to an existing user or a new one.')
+                    'label'     => t('Use existing user:'),
+                    'value'     => !$config->user_name ? 1 : array_search($config->user_name, $users) !== false,
+                    'helptext'  => t('Please decide whether to use an existing user or to create a new one.')
                 )
             );
-            $this->enableAutoSubmit(array('internal_administrator_select_type'));
+            $this->enableAutoSubmit(array('use_existing'));
 
-            if ($this->getRequest()->getParam('internal_administrator_select_type', 0) === 0  && !(empty($this->users))) {
-                $this->addElement(
-                    'select',
-                    'internal_administrator_existing_username',
-                    array(
-                        'required'     => true,
-                        'label'        => t('Username'),
-                        'helptext'     => t('Give administration privileges to the selected user.'),
-                        'value'        => $config->get('internal_administrator_existing', key($this->users)),
-                        'multiOptions' => $this->users
-                    )
-                );
+            if ($this->getRequest()->getParam('use_existing', $this->getElement('use_existing')->getValue())) {
+                $this->addExistingUserControls($users);
             } else {
-
-                if (empty($users)) {
-                    $this->addErrorMessage(
-                        t('No users available, you need to create a new one.')
-                    );
-                    $this->getElement('internal_administrator_select_type')->setValue(1);
-                }
-
-                // Create new user
-                $this->addElement(
-                    'text',
-                    'internal_administrator_new_username',
-                    array(
-                        'required'  => true,
-                        'label'     => t('Username'),
-                        'helptext'  => t('Create a new IcingaWeb administrator.'),
-                        'value'     => $config->get('internal_administrator_new', '')
-                    )
-                );
-
-                $this->addElement(
-                    'password',
-                    'internal_administrator_new_password',
-                    array(
-                        'required'   => true,
-                        'label'      => t('Password'),
-                        'helptext'   => t('Provide the password of the new administrator.'),
-                        'value'      => $config->get('internal_administrator_new_password', ''),
-                        'validators' => array(array('NotEmpty'))
-                    )
-                );
-
-                $this->addElement(
-                    'password',
-                    'internal_administrator_new_confirm_password',
-                    array(
-                        'required'   => true,
-                        'label'      => t('Confirm Password'),
-                        'helptext'   => t('Confirm the password of the new administrator.'),
-                        'value'      => $config->get('internal_administrator_new_confirm_password', ''),
-                        'validators' => array(new Zend_Validate_Identical('internal_administrator_new_password'))
-                    )
-                );
+                $this->addNewUserControls();
             }
         }
-    }
-
-    /**
-     * Return if the given set of data is valid.
-     *
-     * @param array $data   The form data.
-     *
-     * @return bool If the data is valid.
-     */
-    public function isValid($data) {
-        foreach ($this->getElements() as $key => $element) {
-            // Initialize all empty elements with their default values.
-            if (!isset($data[$key])) {
-                $data[$key] = $element->getValue();
-            }
-        }
-        return parent::isValid($data);
     }
 
     /**
@@ -268,27 +60,123 @@ class AdministrationPage extends Page
      */
     public function getConfig()
     {
+        $config = array();
+
         $values = $this->getValues();
-        $cfg = array();
-        if ($this->authenticationMode === 'external') {
-            if (array_key_exists('external_administrator', $values)) {
-                $cfg['external_administrator'] = $values['external_administrator'];
-            }
-        } else {
-            if (
-                array_key_exists('internal_administrator_select_type', $values)
-                && $values['internal_administrator_select_type']
-            ) {
-                if (array_key_exists('internal_administrator_existing_username', $values)) {
-                    $cfg['username'] = $values['internal_administrator_existing_username'];
-                }
-            } else {
-                if (array_key_exists('internal_administrator_new_username', $values)) {
-                    $cfg['username'] = $values['internal_administrator_new_username'];
-                }
-            }
+        if (isset($values['external_user'])) {
+            $config['user_name'] = $values['external_user'];
+        } elseif (isset($values['existing_user'])) {
+            $config['user_name'] = $values['existing_user'];
+        } elseif (isset($values['new_user']) && isset($values['password1'])) {
+            $config['user_name'] = $values['new_user'];
+            $config['password'] = $values['password1'];
         }
-        return new Zend_Config($cfg);
+
+        return new Zend_Config($config);
+    }
+
+    /**
+     * Return all users from the configured backend
+     *
+     * @param   Zend_Config     $config     The backend configuration
+     *
+     * @return  array                       The found usernames
+     */
+    protected function getUsersFromBackend(Zend_Config $config)
+    {
+        $resource = ResourceFactory::createResource($config->resource_configuration);
+        switch ($config->type) {
+            case 'db':
+                $authBackend = new DbUserBackend($resource);
+                return $authBackend->getUsers();
+            case 'ldap':
+                $authBackend = new LdapUserBackend($resource, $config->user_class, $config->user_name_attribute);
+                return $authBackend->getUsers();
+            case 'external':
+                // TODO: Fetch the currently logged in user from a external auth provider (refs #6081)
+            default:
+                return array();
+        }
+    }
+
+    /**
+     * Add input element to define an external username
+     *
+     * @param   array   $users  The users the user can select
+     */
+    protected function addExternalUserControls(array $users) {
+        $config = $this->getConfiguration();
+        $this->addElement(
+            'text',
+            'external_user',
+            array(
+                'required'  => true,
+                'label'     => t('Username:'),
+                'helptext'  => t('Put in here the name of the user which will authenticate externally.'),
+                'value'     => !$config->user_name ? (empty($users) ? '' : $users[0]) : $config->user_name
+            )
+        );
+    }
+
+    /**
+     * Add a select box with the given users as values
+     *
+     * @param   array   $users  The users the user can select
+     */
+    protected function addExistingUserControls(array $users)
+    {
+        $config = $this->getConfiguration();
+        $this->addElement(
+            'select',
+            'existing_user',
+            array(
+                'required'      => true,
+                'multiOptions'  => $users,
+                'value'         => array_search($config->user_name, $users) || 0,
+                'label'         => t('Username:'),
+                'helptext'      => t('Please choose an existing user.')
+            )
+        );
+    }
+
+    /**
+     * Add input elements to create a new user
+     */
+    protected function addNewUserControls()
+    {
+        $config = $this->getConfiguration();
+        $this->addElement(
+            'text',
+            'new_user',
+            array(
+                'required'  => true,
+                'label'     => t('Username:'),
+                'helptext'  => t('The name of the user to create.'),
+                'value'     => $config->get('new_user', '')
+            )
+        );
+        $this->addElement(
+            'password',
+            'password1',
+            array(
+                'required'   => true,
+                'label'      => t('Password:'),
+                'helptext'   => t('Provide a password for the new user.'),
+                'value'      => $config->get('password1', ''),
+                'validators' => array(array('NotEmpty'))
+            )
+        );
+        $this->addElement(
+            'password',
+            'password2',
+            array(
+                'required'   => true,
+                'label'      => t('Confirm Password:'),
+                'helptext'   => t('Please repeat the password you\'ve provided above to verify that it\'s correct.'),
+                'value'      => $config->get('password2', ''),
+                'validators' => array(new Zend_Validate_Identical('password1'))
+            )
+        );
     }
 }
 // @codeCoverageIgnoreEnd
