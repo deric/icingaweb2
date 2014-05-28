@@ -39,7 +39,7 @@ class Wizard extends Page
      */
     public function getPages()
     {
-        return array_filter($this->pages, function ($page) { return $page->isRequired(); });
+        return array_values(array_filter($this->pages, function ($page) { return $page->isRequired(); }));
     }
 
     /**
