@@ -35,7 +35,6 @@ class InstallController extends ActionController
         $wizard = $this->createWizard();
 
         if ($wizard->isSubmittedAndValid()) {
-            var_dump($wizard->getValues());
             $wizard->navigate();
             if ($wizard->isFinished()) {
                 // TODO: Run the installer (Who creates an installer? How do we handle module installers?)
@@ -73,7 +72,10 @@ class InstallController extends ActionController
 /*
 //                t('Welcome') => 'Icinga\Form\Install\WelcomePage',
 //                t('Requirements') => 'Icinga\Form\Install\RequirementsPage',
-                t('Authentication') => 'Icinga\Form\Install\AuthenticationPage',
+                'my_title' => array(
+                    t('Authentication Method')   => 'Icinga\Form\Install\AuthenticationMethod',
+                    t('Authentication Resource') => 'Icinga\Form\Install\AuthenticationPage'
+                ),
                 t('Administration') => 'Icinga\Form\Install\AdministrationPage',
 //                t('Preferences') => 'Icinga\Form\Install\PreferencesPage',
                 t('Logging') => 'Icinga\Form\Install\LoggingPage',

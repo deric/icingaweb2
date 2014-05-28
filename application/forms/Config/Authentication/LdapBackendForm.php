@@ -40,6 +40,8 @@ use Icinga\Authentication\Backend\LdapUserBackend;
  */
 class LdapBackendForm extends BaseBackendForm
 {
+    public $showButton = true;
+
     /**
      * Return content of the resources.ini or previously set resources
      *
@@ -118,17 +120,19 @@ class LdapBackendForm extends BaseBackendForm
             )
         );
 
-        $this->addElement(
-            'button',
-            'btn_submit',
-            array(
-                'type'      => 'submit',
-                'value'     => '1',
-                'escape'    => false,
-                'class'     => 'btn btn-cta btn-wide',
-                'label'     => '<i class="icinga-icon-save"></i> Save Backend'
-            )
-        );
+        if ($this->showButton) {
+            $this->addElement(
+                'button',
+                'btn_submit',
+                array(
+                    'type'      => 'submit',
+                    'value'     => '1',
+                    'escape'    => false,
+                    'class'     => 'btn btn-cta btn-wide',
+                    'label'     => '<i class="icinga-icon-save"></i> Save Backend'
+                )
+            );
+        }
     }
 
     /**
@@ -188,7 +192,6 @@ class LdapBackendForm extends BaseBackendForm
             );
             return false;
         }
-
         return true;
     }
 }

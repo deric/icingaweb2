@@ -28,39 +28,24 @@
  */
 use Icinga\Web\Wizard\Page;
 
-use Icinga\Data\ResourceFactory;
 use Icinga\Form\Config\Authentication\LdapBackendForm;
 use Icinga\Form\Config\Resource\ResourceBaseForm;
 use Icinga\Form\Config\Authentication\BaseBackendForm;
-use Icinga\Form\Config\ResourceForm;
 use Icinga\Protocol\Ldap\Connection;
-use Zend_Form;
-use Icinga\Form\Config\Resource\DbResourceForm;
 use Icinga\Form\Config\Resource\LdapResourceForm;
 use Zend_Config;
 use Zend_Validate_Ip;
 use Zend_Validate_Hostname;
 use Icinga\Web\Form;
+use Zend_Form;
+use Zend_Form_Decorator_Abstract;
+use Zend_Form_Element_Text;
 
 /**
  * Form class for setting the application wide logging configuration
  */
-class AuthenticationPage extends Page
+class AuthenticationResource extends Page
 {
-    /**
-     * Users are authenticated using a database
-     */
-    const AUTHENTICATION_MODE_DATABASE = 'database';
-
-    /**
-     * Users are authenticated using ldap
-     */
-    const AUTHENTICATION_MODE_LDAP = 'ldap';
-
-    /**
-     * Users are authenticated using an external authentication backend
-     */
-    const AUTHENTICATION_MODE_EXTERNAL = 'external';
 
     /**
      * The sub form used to configure the resource.
@@ -88,15 +73,23 @@ class AuthenticationPage extends Page
      *
      * @var string
      */
-    protected $title = '';
+    protected $title = 'authentication_resource';
 
     /**
      * Initialise this form.
      */
     public function init()
     {
-        $this->setName('authentication');
+        $this->setName('authentication_resource');
         $this->title = t('Authentication');
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getName()
+    {
+        return 'authentication_resource';
     }
 
     /**
@@ -106,74 +99,91 @@ class AuthenticationPage extends Page
      */
     public function create()
     {
-        $this->addElement(
-            'text',
-            'resource_name',
-            array(
-                'required' => true,
-                'label'    => t('Resource Name'),
-                'helptext' => t('Specify the name of the new resource.')
-            )
-        );
-
-        $this->addElement(
-            'select',
-            'authentication_mode',
-            array(
-                'required'     => true,
-                'label'        => t('Authentication Method'),
-                'helptext'     => t('Select the method you want to use to authenticate users.'),
-                'value'        => self::AUTHENTICATION_MODE_DATABASE,
-                'multiOptions' => array(
-                    self::AUTHENTICATION_MODE_DATABASE => t('Database'),
-                    self::AUTHENTICATION_MODE_LDAP     => t('AD/LDAP'),
-                    self::AUTHENTICATION_MODE_EXTERNAL => t('External')
-                )
-            )
-        );
-        $this->enableAutoSubmit(array('authentication_mode'));
-
         // TODO: Will only work when next was clicked at least once.
-        switch ($this->getRequest()->getParam('authentication_mode', self::AUTHENTICATION_MODE_DATABASE)) {
-            case self::AUTHENTICATION_MODE_DATABASE:
-                $this->setResourceSubForm(new DbResourceForm());
+        switch ($this->getRequest()->getParam('authentication_mode', '')) {
+            case AuthenticationMethod::AUTHENTICATION_MODE_DATABASE:
+                //$this->setResourceSubForm(new DbResourceForm());
                 break;
-            case self::AUTHENTICATION_MODE_LDAP:
-                $this->addElement(
-                    'text',
-                    'ldap_hostname_discover',
-                    array(
-                        'required' => true,
-                        'label'    => t('Discover AD/LDAP Server'),
-                        'helptext' => t('Enter the hostname, IP or domain of the AD/LDAP server and press "Check".')
-                    )
-                );
+
+            case AuthenticationMethod::AUTHENTICATION_MODE_LDAP:
+                $discover = $this->createDiscoverElement();
+                $this->addElement($discover);
                 $hostname = $this->getRequest()->getParam('ldap_hostname_discover');
 
                 // check hostname
-                $ip = new Zend_Validate_Ip();
+                $ip     = new Zend_Validate_Ip();
                 $domain = new Zend_Validate_Hostname();
-                if (isset($hostname) && $domain->isValid($hostname)) {
+                if (isset($hostname) && ($domain->isValid($hostname) || $hostname === 'localhost')) {
                     // Try to discover servers
                     $connections = Connection::discoverServerlistForDomain($hostname);
                     if (count($connections) > 0) {
-                        foreach ($connections as $connection) {
-                            // TODO: Check Connections
-                        }
+                        $discover->setAttrib('helptext',
+                            sprintf(
+                                t('Discovery successful, found %s servers: %s'),
+                                count($connections),
+                                implode(', ', $connections)
+                            )
+                        );
                         $this->addLdapResourceForm($hostname, $this->getRequest()->getParam('resource_name'));
                     } else {
-                        $this->addErrorMessage(t('No Servers found on this domain.'));
+                        $msg = 'Discovery failed, no ldap servers found. If your directory server does not support '
+                            . ' discovery, you probably need to specify the connection data manually.';
+                        $discover->setAttrib('helptext', t($msg));
+                        $this->addErrorMessage(t($msg));
                     }
                 } else if (isset($hostname) && $ip->isValid($hostname)) {
+                    $msg = 'Cannot perform dns lookup on IP address, please specify the connection data manually.';
                     $this->addLdapResourceForm($hostname, $this->getRequest()->getParam('resource_name'));
+                    $discover->setAttrib('helptext', t($msg));
                 } else {
-                    $this->addCheckButton();
+                    $this->addErrorMessage('Not a valid IP, hostname or Domain.');
                 }
                 break;
+
             case self::AUTHENTICATION_MODE_EXTERNAL:
                 // TODO: external subform
                 break;
         }
+    }
+
+    private function createDiscoverElement()
+    {
+        $discover = new Zend_Form_Element_Text(
+            'ldap_hostname_discover',
+            array(
+                'required' => true,
+                'label'    => t('Discover AD/LDAP Server'),
+                'helptext' => t(
+                    'Enter the hostname, IP or domain of the AD/LDAP server and press "Discover". IcingaWeb will '
+                    . ' search for existing LDAP or ActiveDirectory servers, discover their capabilities and '
+                    . ' fill out some form elements for you.'
+                )
+            )
+        );
+        $discover->setDecorators(
+            array(
+                'ViewHelper',
+                array('Description', array('escape' => false, 'tag' => false)),
+                array(
+                    'HtmlTag',
+                    array('tag' => 'dd')
+                ),
+                // Discover-Button
+                array('callback', array(
+                    'callback'  => function() {
+                            return '<div style="display: block;" class="form-group" id="btn_submit-element">'
+                              . '<button name="btn_submit" id="btn_submit" type="submit" value="1">'
+                                  . '<img src="/icingaweb/img/icons/refresh.png" class="icon" title="Discover" alt="">'
+                              . ' Discover</button></div>';
+                    },
+                    'option'    => 'value',
+                    'placement' => Zend_Form_Decorator_Abstract::APPEND
+                )),
+                array('Label', array('tag' => 'dt')),
+                'Errors',
+            )
+        );
+        return $discover;
     }
 
     private function addLdapResourceForm($hostname, $resourceName)
@@ -184,7 +194,6 @@ class AuthenticationPage extends Page
         $form->setDefault('resource_ldap_hostname', $hostname);
         $form->getElement('resource_ldap_hostname')->setValue($hostname);
         $this->setResourceSubForm($form);
-
         $this->addLdapBackendForm($hostname, $form);
     }
 
@@ -193,6 +202,7 @@ class AuthenticationPage extends Page
         $name = 'ldap_authentication';
 
         $form = new LdapBackendForm();
+        $form->showButton = false;
         $form->setBackendName($name);
         $config = $this->getConfig()->get('backend', new Zend_Config(array()));
         $form->setBackend($config);
@@ -226,36 +236,6 @@ class AuthenticationPage extends Page
         );
         $conn->connect();
         return $conn->getCapabilities();
-    }
-
-    private function addHostSelectBox($connections, $count)
-    {
-        $this->addElement(
-            'select',
-            'ldap_hostname',
-            array(
-                'required'     => true,
-                'label'        => t('Available Hosts'),
-                'helptext'     => sprintf(t('We have discovered %d AD or LDAP servers. Choose one from this list.'), $count),
-                'multiOptions' => $connections
-            )
-        );
-        $this->enableAutoSubmit(array('ldap_hostname'));
-    }
-
-    private function addCheckButton()
-    {
-        $this->addElement(
-            'button',
-            'btn_submit',
-            array(
-                'type'   => 'submit',
-                'escape' => false,
-                'value'  => '1',
-                'label'  => $this->getView()->icon('refresh.png', 'Check')
-                    . ' Check',
-            )
-        );
     }
 
     private function setResourceSubForm(ResourceBaseForm $form)
@@ -294,7 +274,11 @@ class AuthenticationPage extends Page
             $this->addErrorMessages($this->resourceForm->getErrorMessages());
             return false;
         }
-        switch ($this->getRequest()->getParam('authentication_mode')) {
+        if ($this->authForm->isValidAuthenticationBackend()) {
+            $this->addErrorMessages($this->authForm->getErrorMessages());
+            return false;
+        }
+         switch ($this->getRequest()->getParam('authentication_mode')) {
             case self::AUTHENTICATION_MODE_DATABASE:
                 // TODO: Check if database and test if it is writable. If no database exists skip.
                 break;
