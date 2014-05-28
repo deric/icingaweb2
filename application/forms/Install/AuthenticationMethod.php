@@ -64,27 +64,6 @@ class AuthenticationMethod extends Page
     const AUTHENTICATION_MODE_EXTERNAL = 'external';
 
     /**
-     * The sub form used to configure the resource.
-     *
-     * @var ResourceBaseForm
-     */
-    private $resourceForm = null;
-
-    /**
-     * The sub form used to configure the authentication backend.
-     *
-     * @var BaseBackendForm
-     */
-    private $authForm = null;
-
-    /**
-     * The sub form used to configure the authentication backend.
-     *
-     * @var Zend_Form
-     */
-    private $backendForm = null;
-
-    /**
      * @return null|string
      */
     public function getName()
@@ -159,7 +138,6 @@ class AuthenticationMethod extends Page
                     . ' You will be able to specify vendor and connection credentials in the next wizard steps.',
                     null
                 );
-                //$this->setResourceSubForm(new DbResourceForm());
                 break;
 
             case self::AUTHENTICATION_MODE_LDAP:

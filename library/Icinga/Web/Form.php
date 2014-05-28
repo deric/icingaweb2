@@ -383,7 +383,7 @@ class Form extends Zend_Form
      * Enable automatic form submission on the given elements
      *
      * Enables automatic submission of this form once the user edits specific elements
-     *
+     *#
      * @param   array   $triggerElements    The element names which should auto-submit the form
      *
      * @throws  ProgrammingError            When an element is found which does not yet exist

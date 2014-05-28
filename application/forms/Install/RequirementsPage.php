@@ -205,7 +205,7 @@ class RequirementsPage extends Page
             $this->info = array();
             $this->info['os'] = Platform::getOperatingSystemName();
             $this->info['php_version'] = Platform::getPhpVersion();
-            $this->info['php_mod_posix_found'] = Platform::phpHasModule('posidx');
+            $this->info['php_mod_posix_found'] = Platform::phpHasModule('posix');
             $this->info['php_mod_json_found'] = Platform::phpHasModule('json');
             $this->info['php_mod_pdo_found'] = Platform::phpHasModule('pdo');
             $this->info['zend_db_mysql_found'] = Platform::zendClassExists('Zend_Db_Adapter_Pdo_Mysql');
