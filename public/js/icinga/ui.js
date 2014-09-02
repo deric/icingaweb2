@@ -10,6 +10,9 @@
 
     'use strict';
 
+    // The currently hovered tooltip
+    var tooltip = null;
+
     // Stores the icinga-data-url of the last focused table.
     var focusedTableDataUrl = null;
 
@@ -761,13 +764,118 @@
             window.name = 'Icinga_' + id;
         },
 
+
+        hoverTooltip: function (el, config) {
+            var ui = this;
+
+            el.hovered = true;
+            if (config.delayIn) {
+                setTimeout(function() {
+                    ui.showTooltip(el, config);
+                }, config.delayIn);
+            } else {
+                ui.showTooltip(el, config);
+            }
+        },
+
+        showTooltip: function (el, config) {
+            if (tooltip) {
+                $(el).find('div.tipsy').remove();
+                tooltip = null;
+            }
+            if (el.hovered) {
+                tooltip = el;
+                this.__show(el, config);
+            }
+        },
+
+        __show: function(el, config)
+        {
+            var $el = $(el);
+            config = $.extend({}, {
+                className: null,
+                delayIn: 0,
+                delayOut: 0,
+                fade: false,
+                fallback: '',
+                gravity: 'n',
+                html: false,
+                live: false,
+                offset: 0,
+                opacity: 0.8,
+                title: 'title',
+                trigger: 'hover'
+            }, config);
+
+            $el.attr('title-original');
+            var $tip = $('<div class="tipsy"></div>').
+                html('<div class="tipsy-arrow"></div><div class="tipsy-inner"></div>');
+            $tip.find('.tipsy-inner').html($el.attr('title-original'));
+            $tip[0].className = 'tipsy';  // reset classname in case of dynamic gravity
+            $tip.remove().css({top: 0, left: 0, visibility: 'hidden', display: 'block'}).prependTo(document.body);
+
+            var pos = $.extend({}, $el.offset(), {
+                width: $el[0].offsetWidth,
+                height: $el[0].offsetHeight
+            });
+
+            var actualWidth = $tip[0].offsetWidth,
+                actualHeight = $tip[0].offsetHeight,
+                gravity = config.gravity;
+
+            var tp;
+            switch (gravity.charAt(0)) {
+                case 'n':
+                    tp = {
+                        top: pos.top + pos.height + config.offset,
+                        left: pos.left + pos.width / 2 - actualWidth / 2
+                    };
+                    break;
+                case 's':
+                    tp = {
+                        top: pos.top - actualHeight - config.offset,
+                        left: pos.left + pos.width / 2 - actualWidth / 2
+                    };
+                    break;
+                case 'e':
+                    tp = {
+                        top: pos.top + pos.height / 2 - actualHeight / 2,
+                        left: pos.left - actualWidth - config.offset
+                    };
+                    break;
+                case 'w':
+                    tp = {
+                        top: pos.top + pos.height / 2 - actualHeight / 2,
+                        left: pos.left + pos.width + confi.offset
+                    };
+                    break;
+            }
+            if (gravity.length === 2) {
+                if (gravity.charAt(1) === 'w') {
+                    tp.left = pos.left + pos.width / 2 - 15;
+                } else {
+                    tp.left = pos.left + pos.width / 2 - actualWidth + 15;
+                }
+            }
+            $tip.css(tp).addClass('tipsy-' + gravity);
+            $tip.find('.tipsy-arrow')[0].className = 'tipsy-arrow tipsy-arrow-' + gravity.charAt(0);
+            $tip.css({visibility: 'visible', opacity: config.opacity});
+            tooltip = $tip;
+        },
+
+        unhoverTooltip: function (el) {
+            el.hovered = false;
+            if (tooltip) {
+                tooltip.remove();
+            }
+        },
+
         destroy: function () {
             // This is gonna be hard, clean up the mess
             this.icinga = null;
             this.debugTimer = null;
             this.timeCounterTimer = null;
         }
-
     };
 
 }(Icinga, jQuery));

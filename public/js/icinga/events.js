@@ -109,6 +109,15 @@
             if (searchField.length && searchField.val().length) {
                 this.searchValue = searchField.val();
             }
+
+            $('[title]').each(function () {
+                var $el = $(this);
+                $el.attr('title-original', $el.attr('title-rich') || $el.attr('title'));
+                $el.attr('title', null);
+            });
+
+            //$('[title]:not(svg [title])').tipsy({ gravity: $.fn.tipsy.autoNS, delayIn: 500 });
+            //$('svg rect.chart-data').tipsy({ gravity: 'e', html: true });
         },
 
         /**
@@ -162,6 +171,13 @@
             // $(document).on('keyup', 'form.auto input', this.formChangeDelayed);
             // $(document).on('change', 'form.auto input', this.formChanged);
             // $(document).on('change', 'form.auto select', this.submitForm);
+
+            $(document).on('mouseenter', '[title-original]', { gravity: 'n' }, function(event) {
+                icinga.ui.hoverTooltip (this, event.data);
+            });
+            $(document).on('mouseleave', '[title-original]', {}, function() {
+                icinga.ui.unhoverTooltip (this);
+            });
         },
 
         menuTitleHovered: function (event) {
