@@ -8,8 +8,9 @@
     Icinga.Behaviors = Icinga.Behaviors || {};
 
     var Sparkline = function (icinga) {
-        this.icinga = icinga;
+        Icinga.EventListener.call(this, icinga);
     };
+    Sparkline.prototype = new Icinga.EventListener();
 
     Sparkline.prototype.apply = function(el) {
         $('span.sparkline', el).each(function(i, element) {
@@ -43,12 +44,6 @@
                     }
             });
         });
-    };
-
-    Sparkline.prototype.bind = function() {
-    };
-
-    Sparkline.prototype.unbind = function() {
     };
 
     Icinga.Behaviors.Sparkline = Sparkline;

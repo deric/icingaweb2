@@ -8,9 +8,16 @@
     Icinga.Behaviors = Icinga.Behaviors || {};
 
     var Tooltip = function (icinga) {
-        this.icinga = icinga;
+        Icinga.EventListener.call(this, icinga);
         this.mouseX = 0;
         this.mouseY = 0;
+        this.addHandler('mousemove', this.onMousemove);
+    };
+    Tooltip.prototype = new Icinga.EventListener();
+
+    Tooltip.prototype.onMousemove = function(event) {
+        event.data.self.mouseX = event.pageX;
+        event.data.self.mouseY = event.pageY;
     };
 
     Tooltip.prototype.apply = function(el) {
@@ -47,18 +54,6 @@
                 $(this).remove();
             }
         });
-    };
-
-    Tooltip.prototype.bind = function() {
-        var self = this;
-        $(document).on('mousemove', function (event) {
-            self.mouseX = event.pageX;
-            self.mouseY = event.pageY;
-        });
-    };
-
-    Tooltip.prototype.unbind = function() {
-        $(document).off('mousemove');
     };
 
     // Export

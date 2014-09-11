@@ -10,8 +10,15 @@
     Icinga.Behaviors = Icinga.Behaviors || {};
 
     var Navigation = function (icinga) {
-        this.icinga = icinga;
+        Icinga.EventListener.call(this, icinga);
+        this.addHandler('click', '#menu a', this.linkClicked, this);
+        this.addHandler('click', '#menu tr[href]', this.linkClicked, this);
+        this.addHandler('mouseenter', 'li.dropdown', this.dropdownHover, this);
+        this.addHandler('mouseleave', 'li.dropdown', this.dropdownLeave, this);
+        this.addHandler('mouseenter', '#menu > ul > li', this.menuTitleHovered, this);
+        this.addHandler('mouseleave', '#sidebar', this.leaveSidebar, this);
     };
+    Navigation.prototype = new Icinga.EventListener();
 
     Navigation.prototype.apply = function(el) {
         // restore old menu state
@@ -29,24 +36,6 @@
                 activeMenuId = $menus[0].id;
             }
         }
-    };
-
-    Navigation.prototype.bind = function() {
-        $(document).on('click', '#menu a', { self: this }, this.linkClicked);
-        $(document).on('click', '#menu tr[href]', { self: this }, this.linkClicked);
-        $(document).on('mouseenter', 'li.dropdown', this.dropdownHover);
-        $(document).on('mouseleave', 'li.dropdown', {self: this}, this.dropdownLeave);
-        $(document).on('mouseenter', '#menu > ul > li', { self: this }, this.menuTitleHovered);
-        $(document).on('mouseleave', '#sidebar', { self: this }, this.leaveSidebar);
-    };
-
-    Navigation.prototype.unbind = function() {
-        $(document).off('click', '#menu a', this.linkClicked);
-        $(document).off('click', '#menu tr[href]', this.linkClicked);
-        $(document).off('mouseenter', 'li.dropdown', this.dropdownHover);
-        $(document).off('mouseleave', 'li.dropdown', this.dropdownLeave);
-        $(document).off('mouseenter', '#menu > ul > li', this.menuTitleHovered);
-        $(document).on('mouseleave', '#sidebar', this.leaveSidebar);
     };
 
     Navigation.prototype.linkClicked = function(event) {

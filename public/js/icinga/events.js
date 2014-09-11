@@ -92,7 +92,7 @@
          */
         applyGlobalDefaults: function () {
             $.each(self.icinga.behaviors, function (name, behavior) {
-                behavior.bind();
+                behavior.bind($(document));
             });
 
             // We catch resize events
@@ -462,7 +462,7 @@
 
         unbindGlobalHandlers: function () {
             $.each(self.icinga.behaviors, function (name, behavior) {
-                behavior.unbind();
+                behavior.unbind($(document));
             });
             $(window).off('resize', this.onWindowResize);
             $(window).off('load', this.onLoad);
