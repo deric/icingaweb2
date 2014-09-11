@@ -29,7 +29,7 @@
             cond = 'body';
         }
         this.icinga.logger.debug('addHandler: ' + evt + '(' + cond + ')');
-        this.handlers.push({ evt: evt, cond: cond, fn: fn, scope: scope || this });
+        this.handlers.push({ evt: evt, cond: cond, fn: fn, scope: scope });
     };
 
     /**
@@ -48,7 +48,7 @@
             emitter.on(
                 handler.evt, handler.cond,
                 {
-                    self: handler.scope,
+                    self: handler.scope || emitter,
                     icinga: self.icinga
                 }, handler.fn
             );

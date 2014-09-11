@@ -11,7 +11,8 @@
         Icinga.EventListener.call(this, icinga);
         this.mouseX = 0;
         this.mouseY = 0;
-        this.addHandler('mousemove', this.onMousemove);
+        this.addHandler('mousemove', this.onMousemove, this);
+        this.addHandler('rendered', this.onRendered, this);
     };
     Tooltip.prototype = new Icinga.EventListener();
 
@@ -20,10 +21,10 @@
         event.data.self.mouseY = event.pageY;
     };
 
-    Tooltip.prototype.apply = function(el) {
-        var self = this, icinga = this.icinga;
+    Tooltip.prototype.onRendered = function(evt) {
+        var self = evt.data.self, icinga = evt.data.icinga, el = evt.target;
 
-        $('[title]').each(function () {
+        $('[title]', el).each(function () {
             var $el = $(this);
             $el.attr('title', $el.data('title-rich') || $el.attr('title'));
         });

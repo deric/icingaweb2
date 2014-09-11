@@ -13,8 +13,6 @@
     };
     Tristate.prototype = new Icinga.EventListener();
 
-    Tristate.prototype.apply = function () {};
-
     Tristate.prototype.clickTriState = function (event) {
         var self = event.data.self;
         var $tristate = $(this);

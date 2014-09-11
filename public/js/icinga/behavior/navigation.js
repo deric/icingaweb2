@@ -17,10 +17,13 @@
         this.addHandler('mouseleave', 'li.dropdown', this.dropdownLeave, this);
         this.addHandler('mouseenter', '#menu > ul > li', this.menuTitleHovered, this);
         this.addHandler('mouseleave', '#sidebar', this.leaveSidebar, this);
+        this.addHandler('rendered', this.onRendered);
     };
     Navigation.prototype = new Icinga.EventListener();
 
-    Navigation.prototype.apply = function(el) {
+    Navigation.prototype.onRendered = function(evt) {
+        // get original source element of the rendered-event
+        var el = evt.target;
         // restore old menu state
         if (activeMenuId) {
             $('[role="navigation"] li.active', el).removeClass('active');

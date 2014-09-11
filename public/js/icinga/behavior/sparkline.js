@@ -9,10 +9,13 @@
 
     var Sparkline = function (icinga) {
         Icinga.EventListener.call(this, icinga);
+        this.addHandler('rendered', this.onRendered, this);
     };
     Sparkline.prototype = new Icinga.EventListener();
 
-    Sparkline.prototype.apply = function(el) {
+    Sparkline.prototype.onRendered = function(evt) {
+        var el = evt.target;
+
         $('span.sparkline', el).each(function(i, element) {
             // read custom options
             var $spark            = $(element);
