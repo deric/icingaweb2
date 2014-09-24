@@ -194,7 +194,7 @@ class Perfdata
                 return null;
             }
 
-            if ($this->value > $minValue) {
+            if ($this->value >= $minValue) {
                 return (($this->value - $minValue) / ($this->maxValue - $minValue)) * 100;
             }
         }

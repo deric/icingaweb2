@@ -12,11 +12,11 @@ class Zend_View_Helper_Perfdata extends Zend_View_Helper_Abstract
     public function perfdata($perfdataStr, $compact = false, $float = false)
     {
         $pset = PerfdataSet::fromString($perfdataStr)->asArray();
-        $onlyPieChartData = array_filter($pset, function ($e) { return $e->getPercentage() > 0; });
+        $onlyPieChartData = array_filter($pset, function ($e) { return $e->getPercentage() >= 0; });
         if ($compact) {
             $onlyPieChartData = array_slice($onlyPieChartData, 0, 5);
         } else {
-            $nonPieChartData = array_filter($pset, function ($e) { return $e->getPercentage() == 0; });
+            $nonPieChartData = array_filter($pset, function ($e) { return !is_numeric($e->getPercentage()); });
         }
 
         $result = '';
