@@ -2,10 +2,7 @@
 // {{{ICINGA_LICENSE_HEADER}}}
 // {{{ICINGA_LICENSE_HEADER}}}
 
-use Icinga\Web\Form;
 use Icinga\Module\Monitoring\Controller;
-use Icinga\Module\Monitoring\Backend;
-use Icinga\Data\SimpleQuery;
 use Icinga\Web\Widget\Chart\InlinePie;
 use Icinga\Module\Monitoring\Form\Command\MultiCommandFlagForm;
 use Icinga\Web\Widget;
@@ -57,17 +54,17 @@ class Monitoring_MultiController extends Controller
         $this->view->pie = $this->createPie(
             $this->view->states,
             $this->view->getHelper('MonitoringState')->getHostStateColors(),
-            t('Host State')
+            mt('monitoring', 'Host State')
         );
 
         // Handle configuration changes
         $this->handleConfigurationForm(array(
-            'host_passive_checks_enabled' => 'Passive Checks',
-            'host_active_checks_enabled'  => 'Active Checks',
-            'host_notifications_enabled'  => 'Notifications',
-            'host_event_handler_enabled'  => 'Event Handler',
-            'host_flap_detection_enabled' => 'Flap Detection',
-            'host_obsessing'              => 'Obsessing'
+            'host_passive_checks_enabled' => $this->translate('Passive Checks'),
+            'host_active_checks_enabled'  => $this->translate('Active Checks'),
+            'host_notifications_enabled'  => $this->translate('Notifications'),
+            'host_event_handler_enabled'  => $this->translate('Event Handler'),
+            'host_flap_detection_enabled' => $this->translate('Flap Detection'),
+            'host_obsessing'              => $this->translate('Obsessing')
         ));
     }
 
@@ -120,22 +117,22 @@ class Monitoring_MultiController extends Controller
         $this->view->service_pie    = $this->createPie(
             $this->view->service_states,
             $this->view->getHelper('MonitoringState')->getServiceStateColors(),
-            t('Service State')
+            mt('monitoring', 'Service State')
         );
         $this->view->host_pie       = $this->createPie(
             $this->view->host_states,
             $this->view->getHelper('MonitoringState')->getHostStateColors(),
-            t('Host State')
+            mt('monitoring', 'Host State')
         );
         $this->view->errors         = $errors;
 
         $this->handleConfigurationForm(array(
-            'service_passive_checks_enabled' => 'Passive Checks',
-            'service_active_checks_enabled'  => 'Active Checks',
-            'service_notifications_enabled'  => 'Notifications',
-            'service_event_handler_enabled'  => 'Event Handler',
-            'service_flap_detection_enabled' => 'Flap Detection',
-            'service_obsessing'              => 'Obsessing',
+            'service_passive_checks_enabled' => $this->translate('Passive Checks'),
+            'service_active_checks_enabled'  => $this->translate('Active Checks'),
+            'service_notifications_enabled'  => $this->translate('Notifications'),
+            'service_event_handler_enabled'  => $this->translate('Event Handler'),
+            'service_flap_detection_enabled' => $this->translate('Flap Detection'),
+            'service_obsessing'              => $this->translate('Obsessing'),
         ));
     }
 

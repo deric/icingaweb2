@@ -4,13 +4,13 @@
 
 namespace Icinga\Data;
 
-use Icinga\Exception\ProgrammingError;
 use Zend_Config;
+use Icinga\Application\Config;
+use Icinga\Exception\ProgrammingError;
 use Icinga\Util\ConfigAwareFactory;
 use Icinga\Exception\ConfigurationError;
 use Icinga\Data\Db\DbConnection;
 use Icinga\Protocol\Livestatus\Connection as LivestatusConnection;
-use Icinga\Protocol\Statusdat\Reader as StatusdatReader;
 use Icinga\Protocol\Ldap\Connection as LdapConnection;
 use Icinga\Protocol\File\FileReader;
 
@@ -102,7 +102,7 @@ class ResourceFactory implements ConfigAwareFactory
      *
      * @param Zend_Config $config                   The configuration for the created resource.
      *
-     * @return DbConnection|LdapConnection|LivestatusConnection|StatusdatReader An objects that can be used to access
+     * @return DbConnection|LdapConnection|LivestatusConnection An object that can be used to access
      *         the given resource. The returned class depends on the configuration property 'type'.
      * @throws ConfigurationError When an unsupported type is given
      */
@@ -115,14 +115,14 @@ class ResourceFactory implements ConfigAwareFactory
             case 'ldap':
                 $resource = new LdapConnection($config);
                 break;
-            case 'statusdat':
-                $resource = new StatusdatReader($config);
-                break;
             case 'livestatus':
                 $resource = new LivestatusConnection($config->socket);
                 break;
             case 'file':
                 $resource = new FileReader($config);
+                break;
+            case 'ini':
+                $resource = Config::fromIni($config->ini);
                 break;
             default:
                 throw new ConfigurationError(
@@ -137,7 +137,7 @@ class ResourceFactory implements ConfigAwareFactory
      * Create a resource from name
      *
      * @param   string  $resourceName
-     * @return  DbConnection|LdapConnection|LivestatusConnection|StatusdatReader
+     * @return  DbConnection|LdapConnection|LivestatusConnection
      */
     public static function create($resourceName)
     {

@@ -8,7 +8,7 @@ class icingaweb2_dev {
     notify => Service['apache'],
   }
 
-  package { 'php-pdo':
+  package { [ 'php-pdo', 'php-ldap', 'php-phpunit-PHPUnit', 'icinga-gui' ]:
     ensure => latest,
     notify => Service['apache'],
   }
@@ -19,7 +19,7 @@ class icingaweb2_dev {
     ensure  => directory,
     owner   => 'apache',
     group   => 'apache',
-    mode    => 6750,
+    mode    => 6755,
     require => [
       Class['apache'],
       File['icingaweb2cfgDir']
@@ -29,6 +29,10 @@ class icingaweb2_dev {
     command => 'icingacli module enable monitoring',
     user    => 'apache',
     require => Class[[ 'icingacli', 'apache' ]],
+  }
+  -> exec { 'enable-test-module':
+    command => 'icingacli module enable test',
+    user    => 'apache'
   }
 
   group { 'icingacmd':
@@ -99,6 +103,6 @@ class icingaweb2_dev {
   }
   -> exec { 'iptables-allow-http':
     unless  => 'grep -Fxqe "-A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT" /etc/sysconfig/iptables',
-    command => '/sbin/iptables -I INPUT 5 -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT && /sbin/iptables-save > /etc/sysconfig/iptables'
+    command => '/sbin/iptables -I INPUT 1 -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT && /sbin/iptables-save > /etc/sysconfig/iptables'
   }
 }

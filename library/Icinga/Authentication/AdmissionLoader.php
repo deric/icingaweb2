@@ -6,6 +6,7 @@ namespace Icinga\Authentication;
 
 use Icinga\Application\Config;
 use Icinga\Exception\NotReadableError;
+use Icinga\User;
 use Icinga\Util\String;
 
 /**
@@ -14,77 +15,97 @@ use Icinga\Util\String;
 class AdmissionLoader
 {
     /**
-     * Match against groups
-     *
-     * @param   string  $section
      * @param   string  $username
-     * @param   array   $groups
+     * @param   array   $userGroups
+     * @param   mixed   $section
      *
      * @return  bool
      */
-    private function match($section, $username, array $groups)
+    protected function match($username, $userGroups, $section)
     {
-        if ($section->users && in_array($username, String::trimSplit($section->users)) === true) {
-            return true;
+        $username = strtolower($username);
+        if (! empty($section->users)) {
+            $users = array_map('strtolower', String::trimSplit($section->users));
+            if (in_array($username, $users)) {
+                return true;
+            }
         }
-
-        if ($section->groups && count(array_intersect(String::trimSplit($section->groups), $groups)) > 0) {
-            return true;
+        if (! empty($section->groups)) {
+            $groups = array_map('strtolower', String::trimSplit($section->groups));
+            foreach ($userGroups as $userGroup) {
+                if (in_array(strtolower($userGroup), $groups)) {
+                    return true;
+                }
+            }
         }
-
         return false;
     }
 
     /**
-     * Retrieve permissions
+     * Get user permissions
      *
-     * @param   string  $username
-     * @param   array   $groups
+     * @param   User  $user
      *
      * @return  array
      */
-    public function getPermissions($username, array $groups)
+    public function getPermissions(User $user)
     {
         $permissions = array();
         try {
             $config = Config::app('permissions');
         } catch (NotReadableError $e) {
+            Logger::error(
+                'Can\'t get permissions for user \'%s\'. An exception was thrown:',
+                $user->getUsername(),
+                $e
+            );
             return $permissions;
         }
+        $username = $user->getUsername();
+        $userGroups = $user->getGroups();
         foreach ($config as $section) {
-            if ($this->match($section, $username, $groups)) {
-                foreach ($section as $key => $value) {
-                    if (strpos($key, 'permission') === 0) {
-                        $permissions = array_merge($permissions, String::trimSplit($value));
-                    }
-                }
+            if (! empty($section->permissions)
+                && $this->match($username, $userGroups, $section)
+            ) {
+                $permissions = array_merge(
+                    $permissions,
+                    array_diff(String::trimSplit($section->permissions), $permissions)
+                );
             }
         }
         return $permissions;
     }
 
     /**
-     * Retrieve restrictions
+     * Get user restrictions
      *
-     * @param   $username
-     * @param   array $groups
+     * @param   User  $user
      *
      * @return  array
      */
-    public function getRestrictions($username, array $groups)
+    public function getRestrictions(User $user)
     {
         $restrictions = array();
         try {
             $config = Config::app('restrictions');
         } catch (NotReadableError $e) {
+            Logger::error(
+                'Can\'t get restrictions for user \'%s\'. An exception was thrown:',
+                $user->getUsername(),
+                $e
+            );
             return $restrictions;
         }
+        $username = $user->getUsername();
+        $userGroups = $user->getGroups();
         foreach ($config as $section) {
-            if ($this->match($section, $username, $groups)) {
-                if (!array_key_exists($section->name, $restrictions)) {
-                    $restrictions[$section->name] = array();
-                }
-                $restrictions[$section->name][] = $section->restriction;
+            if (! empty($section->restriction)
+                && $this->match($username, $userGroups, $section)
+            ) {
+                $restrictions = array_merge(
+                    $restrictions,
+                    array_diff(String::trimSplit($section->restriction), $restrictions)
+                );
             }
         }
         return $restrictions;
